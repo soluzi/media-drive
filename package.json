@@ -1,0 +1,88 @@
+{
+  "name": "media-storage",
+  "version": "1.0.0",
+  "description": "A Node.js media library package inspired by Laravel Media Library, designed for Express + Prisma + TypeScript environments",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./prisma": "./prisma/schema.prisma"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "postinstall": "node scripts/setup-prisma.js",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": [
+    "media",
+    "library",
+    "file-upload",
+    "express",
+    "prisma",
+    "typescript",
+    "s3",
+    "bunnycdn",
+    "storage"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.478.0",
+    "@aws-sdk/s3-request-presigner": "^3.478.0",
+    "axios": "^1.6.2",
+    "bullmq": "^4.15.4",
+    "express": "^4.18.2",
+    "file-type": "^18.7.0",
+    "ioredis": "^5.3.2",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.34.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.8",
+    "@types/multer": "^1.4.11",
+    "@types/node": "^20.10.4",
+    "@types/supertest": "^2.0.16",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.1",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "@prisma/client": "^5.0.0",
+    "prisma": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@prisma/client": {
+      "optional": false
+    },
+    "prisma": {
+      "optional": false
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "prisma/**/*",
+    "scripts/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/node-media-library.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/node-media-library/issues"
+  },
+  "homepage": "https://github.com/your-username/node-media-library#readme"
+}

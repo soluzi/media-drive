@@ -1,0 +1,32 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Media {
+    id                String   @id @default(cuid())
+    model_type        String
+    model_id          String
+    collection_name   String   @default("default")
+    name              String
+    file_name         String
+    mime_type         String
+    disk              String   @default("local")
+    size              Int
+    manipulations     Json?
+    custom_properties Json?
+    responsive_images Json?
+    order_column      Int?
+    created_at        DateTime @default(now())
+    updated_at        DateTime @updatedAt
+
+    @@index([model_type, model_id])
+    @@index([model_type, model_id, collection_name])
+    @@index([disk])
+    @@map("media")
+}
