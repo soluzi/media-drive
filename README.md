@@ -4,14 +4,14 @@ A Node.js media library package inspired by Laravel Media Library, designed for 
 
 ## Features
 
-- 📁 **File Management**: Attach files to any model (polymorphic relationships)
-- 🗄️ **Multiple Storage**: Support for local filesystem, Amazon S3, and BunnyCDN
-- 🖼️ **Image Processing**: Automatic image conversions using Sharp
-- 🔗 **URL Uploads**: Attach files from external URLs
-- 📊 **Prisma Integration**: Full TypeScript support with Prisma ORM
-- 🛡️ **Type Safety**: Complete TypeScript definitions
-- ⚡ **Express Ready**: Built-in REST API routes
-- 🔄 **Async Processing**: Optional BullMQ integration for background jobs
+- **File Management**: Attach files to any model (polymorphic relationships)
+- **Multiple Storage**: Support for local filesystem, Amazon S3, and BunnyCDN
+- **Image Processing**: Automatic image conversions using Sharp
+- **URL Uploads**: Attach files from external URLs
+- **Prisma Integration**: Full TypeScript support with Prisma ORM
+- **Type Safety**: Complete TypeScript definitions
+- **Express Ready**: Built-in REST API routes
+- **Async Processing**: Optional BullMQ integration for background jobs
 
 ## Installation
 
