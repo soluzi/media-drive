@@ -6,7 +6,7 @@ const { execSync } = require("child_process");
 
 /**
  * Setup Prisma schema with media tables
- * This script is run automatically when media-storage is installed
+ * This script is run automatically when media-drive is installed
  */
 
 function findPrismaSchemaFile(startPath) {
@@ -37,7 +37,7 @@ function addMediaModelToSchema(schemaPath) {
 
   // Media model definition
   const mediaModel = `
-// Media model from media-storage
+// Media model from media-drive
 model Media {
     id                String   @id @default(cuid())
     model_type        String
@@ -85,7 +85,7 @@ function ensurePrismaClientGenerated() {
 }
 
 function main() {
-  console.log("🚀 Setting up media-storage...");
+  console.log("🚀 Setting up media-drive...");
 
   // Find the project root (where package.json exists)
   let currentDir = process.cwd();
@@ -133,7 +133,7 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-// Media model from media-storage
+// Media model from media-drive
 model Media {
     id                String   @id @default(cuid())
     model_type        String

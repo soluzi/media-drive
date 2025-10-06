@@ -42,7 +42,7 @@ import {
   MediaLibrary,
   createMediaQueue,
   createMediaConversionWorker,
-} from "media-storage";
+} from "media-drive";
 import { PrismaClient } from "@prisma/client";
 
 // Initialize media library
@@ -99,7 +99,7 @@ console.log(`Queue stats:`, stats);
 The library includes REST endpoints for job management:
 
 ```typescript
-import { createJobRoutes } from "media-storage";
+import { createJobRoutes } from "media-drive";
 
 const jobRoutes = createJobRoutes(mediaLibrary, mediaQueue);
 app.use("/media", jobRoutes);
@@ -121,7 +121,7 @@ Run the worker in a separate process:
 
 ```bash
 # job-worker.ts
-import { createMediaConversionWorker } from 'media-storage';
+import { createMediaConversionWorker } from 'media-drive';
 
 const worker = createMediaConversionWorker(prisma, redis);
 console.log('Worker started');
@@ -247,7 +247,7 @@ import {
   createJobRoutes,
   MediaLibrary,
   createMediaQueue,
-} from "media-storage";
+} from "media-drive";
 
 const app = express();
 const redis = new Redis();
@@ -272,7 +272,7 @@ app.listen(3000);
 
 ```typescript
 // worker.ts (separate process)
-import { createMediaConversionWorker } from "media-storage";
+import { createMediaConversionWorker } from "media-drive";
 
 const worker = createMediaConversionWorker(prisma, redis);
 console.log("Media conversion worker started");

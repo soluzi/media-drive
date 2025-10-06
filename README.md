@@ -1,4 +1,4 @@
-# media-storage
+# media-drive
 
 TypeScript media library for Node.js and Express with Prisma ORM. Manage and attach files to any model using collections, sharp image conversions, and flexible local or S3 storage. Includes REST routes, Axios support, and optional signed URLs for secure access.
 
@@ -16,7 +16,7 @@ TypeScript media library for Node.js and Express with Prisma ORM. Manage and att
 ## Installation
 
 ```bash
-npm install media-storage
+npm install media-drive
 ```
 
 ## Prerequisites
@@ -69,7 +69,7 @@ npx prisma migrate dev
 Initialize the media library in your application:
 
 ```typescript
-import { initMediaLibrary } from "media-storage";
+import { initMediaLibrary } from "media-drive";
 
 // Local storage configuration
 initMediaLibrary({
@@ -116,7 +116,7 @@ initMediaLibrary({
 
 ```typescript
 import express from "express";
-import { mediaRouter } from "media-storage";
+import { mediaRouter } from "media-drive";
 
 const app = express();
 
@@ -184,7 +184,7 @@ DELETE /media/:id
 ### Basic File Upload
 
 ```typescript
-import { MediaLibrary } from "media-storage";
+import { MediaLibrary } from "media-drive";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -312,7 +312,7 @@ import {
   AttachFileOptions,
   ConversionOptions,
   MediaLibraryConfig,
-} from "media-storage";
+} from "media-drive";
 ```
 
 ## Error Handling
