@@ -1,7 +1,7 @@
 {
   "name": "media-storage",
   "version": "1.0.0",
-  "description": "A Node.js media library package inspired by Laravel Media Library, designed for Express + Prisma + TypeScript environments",
+  "description": "TypeScript media library for Node.js and Express with Prisma ORM. Manage and attach files to any model using collections, sharp image conversions, and flexible local or S3 storage. Includes REST routes, Axios support, and optional signed URLs for secure access.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -9,7 +9,8 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./prisma": "./prisma/schema.prisma"
+    "./prisma": "./prisma/schema.prisma",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "build": "tsup",
@@ -23,17 +24,26 @@
     "test:coverage": "jest --coverage"
   },
   "keywords": [
-    "media",
-    "library",
-    "file-upload",
+    "media-library",
+    "typescript",
+    "nodejs",
     "express",
     "prisma",
-    "typescript",
+    "file-upload",
+    "sharp",
     "s3",
     "bunnycdn",
-    "storage"
+    "storage",
+    "file-management",
+    "attachments",
+    "image-processing",
+    "rest-api",
+    "axios",
+    "bullmq",
+    "signed-urls",
+    "polymorphic-models"
   ],
-  "author": "Your Name",
+  "author": "Dadda Abdelghafour",
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.478.0",
@@ -79,10 +89,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/node-media-library.git"
+    "url": "https://github.com/soluzi/media-storage.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/node-media-library/issues"
+    "url": "https://github.com/soluzi/media-storage/issues"
   },
-  "homepage": "https://github.com/your-username/node-media-library#readme"
+  "homepage": "https://github.com/soluzi/media-storage#readme",
+  "publishConfig": {
+    "@soluzi:registry": "https://npm.pkg.github.com"
+  }
 }
