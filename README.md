@@ -1,6 +1,6 @@
 # media-storage
 
-A Node.js media library package inspired by Laravel Media Library, designed for Express + Prisma + TypeScript environments.
+TypeScript media library for Node.js and Express with Prisma ORM. Manage and attach files to any model using collections, sharp image conversions, and flexible local or S3 storage. Includes REST routes, Axios support, and optional signed URLs for secure access.
 
 ## Features
 
