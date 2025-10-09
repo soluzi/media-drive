@@ -1,7 +1,9 @@
-export * from "./config";
-export * from "./service";
-export * from "./routes";
-export * from "./job-routes";
-export * from "./storage/index";
-export * from "./utils/index";
-export * from "./jobs";
+/**
+ * Media Module
+ */
+
+export * from "./media-library";
+export * from "./file-service";
+export * from "./url-service";
+export * from "./validation";
+export * from "./file-type-detector";
