@@ -17,11 +17,13 @@ jest.mock("@prisma/client", () => ({
 // Mock Sharp
 jest.mock("sharp", () => {
   const mockSharp = jest.fn(() => ({
+    rotate: jest.fn().mockReturnThis(),
     resize: jest.fn().mockReturnThis(),
     jpeg: jest.fn().mockReturnThis(),
     png: jest.fn().mockReturnThis(),
     webp: jest.fn().mockReturnThis(),
     avif: jest.fn().mockReturnThis(),
+    withMetadata: jest.fn().mockReturnThis(),
     toBuffer: jest.fn().mockResolvedValue(Buffer.from("mock-image-data")),
   }));
 
