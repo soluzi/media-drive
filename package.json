@@ -1,13 +1,44 @@
 {
   "name": "media-drive",
   "version": "1.0.1",
-  "description": "TypeScript media library for Node.js and Express with Prisma ORM. Manage and attach files to any model using collections, sharp image conversions, and flexible local or S3 storage. Includes REST routes, Axios support, and optional signed URLs for secure access.",
+  "description": "Modular TypeScript media library for Node.js with Prisma ORM. Extensible storage drivers (local, S3, BunnyCDN), image conversions via Sharp, async job processing with BullMQ, and flexible configuration. Inspired by Laravel Media Library.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "media-drive": "./dist/cli/index.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "default": "./dist/config/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "default": "./dist/core/index.js"
+    },
+    "./storage": {
+      "types": "./dist/storage/index.d.ts",
+      "default": "./dist/storage/index.js"
+    },
+    "./conversions": {
+      "types": "./dist/conversions/index.d.ts",
+      "default": "./dist/conversions/index.js"
+    },
+    "./queue": {
+      "types": "./dist/queue/index.d.ts",
+      "default": "./dist/queue/index.js"
+    },
+    "./http": {
+      "types": "./dist/http/index.d.ts",
+      "default": "./dist/http/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "default": "./dist/cli/index.js"
     },
     "./prisma": "./prisma/schema.prisma",
     "./package.json": "./package.json"
@@ -54,7 +85,8 @@
     "file-type": "^18.7.0",
     "ioredis": "^5.3.2",
     "multer": "^1.4.5-lts.1",
-    "sharp": "^0.34.4"
+    "sharp": "^0.34.4",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
@@ -84,7 +116,10 @@
     "dist/**/*",
     "prisma/**/*",
     "scripts/**/*",
+    "docs/**/*",
     "README.md",
+    "ARCHITECTURE.md",
+    "V2_MIGRATION_GUIDE.md",
     "LICENSE"
   ],
   "repository": {
