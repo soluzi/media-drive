@@ -1,5 +1,7 @@
 # Migration Guide: v2.x → v3.0
 
+> **📚 Looking for the complete guide?** See [V3 Migration & Feature Guide](../V3_MIGRATION_GUIDE.md) for a comprehensive overview with examples and best practices.
+
 ## Overview
 
 Media Drive v3.0 introduces **stored file paths** to support non-deterministic path generators (e.g., UUID-based paths, random paths). This change ensures that file URLs remain consistent regardless of the path generation strategy used.

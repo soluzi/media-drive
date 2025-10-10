@@ -8,7 +8,12 @@
 
 ## ⚠️ Upgrading from v2.x?
 
-See the [Migration Guide (v2 → v3)](./docs/MIGRATION_V3.md) for upgrading instructions. v3.0 introduces **stored file paths** to support non-deterministic path generators.
+See the **[V3 Migration & Feature Guide](./V3_MIGRATION_GUIDE.md)** for a comprehensive upgrade guide. v3.0 introduces **stored file paths** to support non-deterministic path generators.
+
+Quick links:
+- 📚 [Full V3 Feature Guide](./V3_MIGRATION_GUIDE.md) - Complete overview with examples
+- 📝 [Quick Migration Steps](./docs/MIGRATION_V3.md) - Step-by-step instructions
+- 🔄 [V2 Migration Guide](./V2_MIGRATION_GUIDE.md) - If upgrading from v1
 
 ## ✨ Features
 
