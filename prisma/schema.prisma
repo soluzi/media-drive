@@ -10,7 +10,7 @@ datasource db {
 
 model Media {
     id                String   @id @default(cuid())
-    path              String   // Stored file path from path generator (supports non-deterministic generators)
+    path              String?  // Stored file path from path generator (optional for v2 backward compatibility)
     model_type        String
     model_id          String
     collection_name   String   @default("default")

@@ -4,6 +4,8 @@
 
 Media Drive v3 introduces **stored file paths** to support non-deterministic path generators, ensuring consistent URLs regardless of your path generation strategy.
 
+> ✅ **100% Backward Compatible!** You can use v3 without migrating. See [Backward Compatibility Guide](./BACKWARD_COMPATIBILITY.md) for details.
+
 ---
 
 ## ✨ Major Improvement
@@ -192,17 +194,17 @@ The only change is **internal**: paths are now stored instead of regenerated.
 
 ## 🎯 Why Upgrade to v3?
 
-| Feature                          | v2                  | v3                        |
-| -------------------------------- | ------------------- | ------------------------- |
-| **Deterministic Path Generators** | ✅                  | ✅                        |
-| **Non-Deterministic Generators**  | ❌ Fails on resolve | ✅ Fully supported        |
-| **UUID-Based Paths**              | ❌                  | ✅                        |
-| **Random Paths**                  | ❌                  | ✅                        |
-| **Performance**                   | Path regeneration   | ✅ No regeneration        |
-| **URL Consistency**               | May change          | ✅ Always consistent      |
-| **Custom Path Generators**        | Limited support     | ✅ Full support (any type)|
-| **Migration Utility**             | ❌                  | ✅ Automated              |
-| **Backward Compatibility**        | N/A                 | ✅ Fallback mechanism     |
+| Feature                           | v2                  | v3                         |
+| --------------------------------- | ------------------- | -------------------------- |
+| **Deterministic Path Generators** | ✅                  | ✅                         |
+| **Non-Deterministic Generators**  | ❌ Fails on resolve | ✅ Fully supported         |
+| **UUID-Based Paths**              | ❌                  | ✅                         |
+| **Random Paths**                  | ❌                  | ✅                         |
+| **Performance**                   | Path regeneration   | ✅ No regeneration         |
+| **URL Consistency**               | May change          | ✅ Always consistent       |
+| **Custom Path Generators**        | Limited support     | ✅ Full support (any type) |
+| **Migration Utility**             | ❌                  | ✅ Automated               |
+| **Backward Compatibility**        | N/A                 | ✅ Fallback mechanism      |
 
 ---
 
@@ -240,7 +242,7 @@ class HashBasedPathGenerator implements PathGenerator {
       fileName: ctx.fileName,
     };
   }
-  
+
   generateConversion(ctx, name) {
     // Conversion logic
   }
@@ -306,11 +308,12 @@ Migrates existing media records to store paths.
 
 ```typescript
 {
-  total: number;      // Total records processed
-  migrated: number;   // Successfully migrated
-  failed: number;     // Failed migrations
-  skipped: number;    // Already had paths
-  errors: Array<{     // Error details
+  total: number; // Total records processed
+  migrated: number; // Successfully migrated
+  failed: number; // Failed migrations
+  skipped: number; // Already had paths
+  errors: Array<{
+    // Error details
     mediaId: string;
     error: string;
   }>;
@@ -325,9 +328,9 @@ Checks how many records need migration.
 
 ```typescript
 {
-  total: number;      // Total media records
-  withPath: number;   // Records with paths
-  withoutPath: number;// Records needing migration
+  total: number; // Total media records
+  withPath: number; // Records with paths
+  withoutPath: number; // Records needing migration
   percentage: number; // % complete (0-100)
 }
 ```
@@ -471,11 +474,12 @@ npx prisma migrate dev --name remove_media_path_field
 
 ## 📖 Resources
 
+- **[Backward Compatibility Guide](./BACKWARD_COMPATIBILITY.md)** - Use v3 without migrating
 - **[V2 Migration Guide](./V2_MIGRATION_GUIDE.md)** - If upgrading from v1
-- **[Architecture Overview](./ARCHITECTURE.md)** - Deep dive into design
-- **[API Reference](./docs/api-reference.md)** - Complete API docs
-- **[Advanced Usage](./docs/advanced.md)** - Custom implementations
-- **[Storage Guide](./docs/storage.md)** - Storage driver details
+- **[Architecture Overview](../ARCHITECTURE.md)** - Deep dive into design
+- **[API Reference](../docs/api-reference.md)** - Complete API docs
+- **[Advanced Usage](../docs/advanced.md)** - Custom implementations
+- **[Storage Guide](../docs/storage.md)** - Storage driver details
 
 ---
 
@@ -491,4 +495,3 @@ Media Drive v3 solves the path generation problem with:
 ✅ **Backward compatible** - Fallback for legacy records
 
 **Upgrade today and unlock support for non-deterministic path generators!** 🚀
-

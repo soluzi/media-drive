@@ -1,6 +1,6 @@
 /**
  * Migration Utility for Media Drive v3.0
- * 
+ *
  * Helps migrate existing media records to store paths in the database.
  * This is required when upgrading from v2.x to v3.0.
  */
@@ -16,12 +16,12 @@ export interface MigrationOptions {
    * Batch size for processing records
    */
   batchSize?: number;
-  
+
   /**
    * Whether to continue on errors
    */
   continueOnError?: boolean;
-  
+
   /**
    * Dry run mode (don't actually update records)
    */
@@ -38,26 +38,26 @@ export interface MigrationResult {
 
 /**
  * Migrate existing media records to store paths
- * 
+ *
  * This utility finds all media records without a stored path and generates
  * the path using the provided path generator.
- * 
+ *
  * @param prisma - Prisma client instance
  * @param pathGenerator - Path generator to use for generating paths
  * @param options - Migration options
  * @returns Migration result statistics
- * 
+ *
  * @example
  * ```typescript
  * import { migrateMediaPaths } from "media-drive/migration";
  * import { DefaultPathGenerator } from "media-drive/strategies";
- * 
+ *
  * const result = await migrateMediaPaths(
  *   prisma,
  *   new DefaultPathGenerator(),
  *   { dryRun: true } // Test first
  * );
- * 
+ *
  * console.log(`Migrated ${result.migrated} of ${result.total} records`);
  * ```
  */
@@ -66,11 +66,7 @@ export async function migrateMediaPaths(
   pathGenerator: PathGenerator,
   options: MigrationOptions = {}
 ): Promise<MigrationResult> {
-  const {
-    batchSize = 100,
-    continueOnError = true,
-    dryRun = false,
-  } = options;
+  const { batchSize = 100, continueOnError = true, dryRun = false } = options;
 
   const result: MigrationResult = {
     total: 0,
@@ -89,10 +85,7 @@ export async function migrateMediaPaths(
     // Find all media records without a path
     const mediasWithoutPath = await prisma.media.findMany({
       where: {
-        OR: [
-          { path: null as any },
-          { path: "" },
-        ],
+        OR: [{ path: null as any }, { path: "" }],
       },
       orderBy: {
         created_at: "asc",
@@ -111,7 +104,9 @@ export async function migrateMediaPaths(
     for (let i = 0; i < mediasWithoutPath.length; i += batchSize) {
       const batch = mediasWithoutPath.slice(i, i + batchSize);
       logger.info(
-        `Processing batch ${Math.floor(i / batchSize) + 1} (${batch.length} records)`
+        `Processing batch ${Math.floor(i / batchSize) + 1} (${
+          batch.length
+        } records)`
       );
 
       for (const media of batch) {
@@ -141,20 +136,20 @@ export async function migrateMediaPaths(
           }
 
           result.migrated++;
-          logger.debug(
-            `✓ Migrated media ${media.id} -> ${pathResult.path}`
-          );
+          logger.debug(`✓ Migrated media ${media.id} -> ${pathResult.path}`);
         } catch (error) {
           result.failed++;
           const errorMessage =
             error instanceof Error ? error.message : String(error);
-          
+
           result.errors.push({
             mediaId: media.id,
             error: errorMessage,
           });
 
-          logger.error(`✗ Failed to migrate media ${media.id}: ${errorMessage}`);
+          logger.error(
+            `✗ Failed to migrate media ${media.id}: ${errorMessage}`
+          );
 
           if (!continueOnError) {
             throw error;
@@ -187,15 +182,13 @@ export async function migrateMediaPaths(
 
 /**
  * Check migration status
- * 
+ *
  * Returns statistics about how many records need migration
- * 
+ *
  * @param prisma - Prisma client instance
  * @returns Object with counts of records with and without paths
  */
-export async function checkMigrationStatus(
-  prisma: PrismaClient
-): Promise<{
+export async function checkMigrationStatus(prisma: PrismaClient): Promise<{
   total: number;
   withPath: number;
   withoutPath: number;
@@ -205,10 +198,7 @@ export async function checkMigrationStatus(
     prisma.media.count(),
     prisma.media.count({
       where: {
-        OR: [
-          { path: null as any },
-          { path: "" },
-        ],
+        OR: [{ path: null as any }, { path: "" }],
       },
     }),
   ]);
@@ -223,4 +213,3 @@ export async function checkMigrationStatus(
     percentage,
   };
 }
-
