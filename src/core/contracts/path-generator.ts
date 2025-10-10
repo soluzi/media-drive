@@ -27,6 +27,11 @@ export interface PathResult {
    * Filename only
    */
   fileName: string;
+
+  /**
+   * Generated mediaId (for simple path strategy)
+   */
+  mediaId?: string;
 }
 
 export interface PathGenerator {

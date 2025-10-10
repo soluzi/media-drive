@@ -25,6 +25,7 @@ const logger = getLogger();
 
 export interface MediaRecord {
   id: string;
+  path: string; // Stored file path from path generator
   model_type: string;
   model_id: string;
   collection_name: string;
@@ -114,9 +115,10 @@ export class MediaLibrary {
       conversions
     );
 
-    // Create database record
+    // Create database record with stored path
     const mediaRecord = await this.prisma.media.create({
       data: {
+        path: result.path,
         model_type: modelType,
         model_id: modelId,
         collection_name: collection,
@@ -240,14 +242,24 @@ export class MediaLibrary {
       }
     }
 
-    // Construct original file path
-    const originalPath = this.pathGenerator.generate({
-      modelType: media.model_type,
-      modelId: media.model_id,
-      collection: media.collection_name,
-      originalName: media.file_name,
-      fileName: media.file_name,
-    }).path;
+    // Use stored path from database (works with any path generator)
+    let originalPath: string = (media as any).path;
+
+    // Fallback for backward compatibility with existing records
+    if (!originalPath) {
+      logger.warn(
+        `Media ${mediaId} has no stored path, regenerating for deletion (this may fail with non-deterministic path generators)`
+      );
+
+      // Try to regenerate path (only works with deterministic generators)
+      originalPath = this.pathGenerator.generate({
+        modelType: media.model_type,
+        modelId: media.model_id,
+        collection: media.collection_name,
+        originalName: media.file_name,
+        fileName: media.file_name,
+      }).path;
+    }
 
     // Delete files
     await this.fileService.delete(originalPath, conversionPaths);
@@ -287,13 +299,24 @@ export class MediaLibrary {
       }
       path = conversions[conversion].path;
     } else {
-      path = this.pathGenerator.generate({
-        modelType: media.model_type,
-        modelId: media.model_id,
-        collection: media.collection_name,
-        originalName: media.file_name,
-        fileName: media.file_name,
-      }).path;
+      // Use stored path from database (works with any path generator)
+      path = (media as any).path;
+
+      // Fallback for backward compatibility with existing records
+      if (!path) {
+        logger.warn(
+          `Media ${mediaId} has no stored path, regenerating (this may fail with non-deterministic path generators)`
+        );
+
+        // Try to regenerate path (only works with deterministic generators)
+        path = this.pathGenerator.generate({
+          modelType: media.model_type,
+          modelId: media.model_id,
+          collection: media.collection_name,
+          originalName: media.file_name,
+          fileName: media.file_name,
+        }).path;
+      }
     }
 
     return await this.urlService.resolveUrl(path, signed);

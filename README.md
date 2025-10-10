@@ -1,10 +1,14 @@
-# Media Drive v2
+# Media Drive v3
 
 > Modular, TypeScript-first media library for Node.js applications  
 > Inspired by Laravel Media Library
 
 [![npm version](https://badge.fury.io/js/media-drive.svg)](https://badge.fury.io/js/media-drive)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## ⚠️ Upgrading from v2.x?
+
+See the [Migration Guide (v2 → v3)](./docs/MIGRATION_V3.md) for upgrading instructions. v3.0 introduces **stored file paths** to support non-deterministic path generators.
 
 ## ✨ Features
 
@@ -86,6 +90,7 @@ const url = await mediaLibrary.resolveFileUrl(media.id);
 - **[API Reference](./docs/api-reference.md)** - Full API documentation
 - **[Storage Drivers](./docs/storage.md)** - Storage backend setup
 - **[Advanced Usage](./docs/advanced.md)** - Custom drivers and strategies
+- **[Examples](./docs/examples/)** - Real-world usage examples
 - **[Architecture](./ARCHITECTURE.md)** - System design and patterns
 
 ## 🏗️ Architecture
@@ -187,7 +192,8 @@ Inspired by [Laravel Media Library](https://github.com/spatie/laravel-medialibra
 
 - **59 tests passing** - 100% test coverage for core modules
 - **6 Cursor Rules** - AI-friendly codebase documentation
-- **5 documentation guides** - Comprehensive user docs
+- **6 documentation guides** - Comprehensive user docs
+- **4 usage examples** - Real-world implementation patterns
 - **3 CLI commands** - Easy setup and diagnostics
 - **Zero TypeScript errors** - Strict mode compliant
 - **54 KB bundle** - Lightweight and tree-shakable

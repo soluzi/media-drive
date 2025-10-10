@@ -102,7 +102,9 @@ const FileNamingSchema = z.object({
 // ==================== Path Generation ====================
 
 const PathGenerationSchema = z.object({
-  strategy: z.enum(["default", "date-based", "flat"]).default("default"),
+  strategy: z
+    .enum(["default", "date-based", "flat", "simple"])
+    .default("default"),
 });
 
 // ==================== Logging ====================
@@ -166,6 +168,8 @@ export type BunnyCDNDisk = z.infer<typeof BunnyCDNDiskSchema>;
 
 // ==================== Helper to Create Config ====================
 
-export function defineConfig(config: Partial<MediaConfig>): MediaConfig {
+export function defineConfig<const T extends Partial<MediaConfig>>(
+  config: T
+): MediaConfig {
   return ConfigSchema.parse(config);
 }

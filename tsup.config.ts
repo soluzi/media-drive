@@ -18,5 +18,5 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   minify: false,
-  external: ["@prisma/client", "prisma"],
+  external: ["@prisma/client", "prisma", "sharp", "bullmq", "ioredis"],
 });

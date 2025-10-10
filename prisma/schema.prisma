@@ -10,6 +10,7 @@ datasource db {
 
 model Media {
     id                String   @id @default(cuid())
+    path              String   // Stored file path from path generator (supports non-deterministic generators)
     model_type        String
     model_id          String
     collection_name   String   @default("default")
@@ -28,5 +29,6 @@ model Media {
     @@index([model_type, model_id])
     @@index([model_type, model_id, collection_name])
     @@index([disk])
+    @@index([path])
     @@map("media")
 }

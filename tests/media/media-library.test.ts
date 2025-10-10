@@ -20,6 +20,9 @@ describe("MediaLibrary", () => {
     mediaLibrary = createMediaLibrary({
       config: {
         disk: "mock",
+        pathGeneration: {
+          strategy: "simple",
+        },
         security: {
           allowedMime: ["image/jpeg", "image/png", "image/webp"],
           forbiddenMime: [],

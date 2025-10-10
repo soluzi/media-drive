@@ -186,16 +186,37 @@ Strategies:
 ```typescript
 {
   pathGeneration: {
-    strategy: "default",  // "default" | "date-based" | "flat"
+    strategy: "default",  // "default" | "date-based" | "flat" | "simple"
   }
 }
 ```
 
 Strategies:
 
-- **default**: `User/123/avatar/abc123.jpg`
-- **date-based**: `User/2024/01/15/abc123.jpg`
-- **flat**: `abc123.jpg`
+- **default**: `User/123/avatar/abc123.jpg` (hierarchical structure)
+- **simple**: `550e8400-e29b-41d4-a716-446655440000/abc123.jpg` (UUID-based, flat structure)
+- **date-based**: `User/2024/01/15/abc123.jpg` (organized by date)
+- **flat**: `abc123.jpg` (all files in root)
+
+#### Simple Path Strategy
+
+The `simple` strategy uses a UUID as the mediaId and stores files in the format `mediaId/fileName`:
+
+```typescript
+const config = defineConfig({
+  pathGeneration: {
+    strategy: "simple" as const,
+  },
+});
+```
+
+**Benefits:**
+
+- Clean, flat structure with no nested directories
+- UUID-based uniqueness ensures no conflicts
+- Easy CDN integration and caching
+- Simple URL structure for frontend consumption
+- Predictable path format
 
 ### Logging
 

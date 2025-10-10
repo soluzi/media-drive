@@ -37,6 +37,50 @@ export class DefaultPathGenerator implements PathGenerator {
 }
 
 /**
+ * Simple path generator using mediaId
+ * Format: {mediaId}/{fileName}
+ */
+export class SimplePathGenerator implements PathGenerator {
+  generate(ctx: PathContext): PathResult {
+    // For simple paths, we use a UUID as mediaId
+    // This UUID will be used as the database ID as well
+    const mediaId = this.generateUUID();
+    const path = `${mediaId}/${ctx.fileName}`;
+
+    return {
+      path,
+      directory: mediaId,
+      fileName: ctx.fileName,
+      mediaId, // Include the generated mediaId in the result
+    };
+  }
+
+  private generateUUID(): string {
+    // Simple UUID v4 generator that works in all environments
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  generateConversion(ctx: PathContext, conversionName: string): PathResult {
+    // For conversions, we need the mediaId from the original path
+    const mediaId = (ctx as any).mediaId || ctx.modelId;
+    const ext = ctx.fileName.substring(ctx.fileName.lastIndexOf("."));
+    const base = getBaseName(ctx.fileName);
+    const fileName = `${base}-${conversionName}${ext}`;
+    const path = `${mediaId}/${fileName}`;
+
+    return {
+      path,
+      directory: mediaId,
+      fileName,
+    };
+  }
+}
+
+/**
  * Date-based path generator
  * Format: {modelType}/{YYYY}/{MM}/{DD}/{fileName}
  */
@@ -107,7 +151,7 @@ export class FlatPathGenerator implements PathGenerator {
  * Factory to create path generators
  */
 export function createPathGenerator(
-  strategy: "default" | "date-based" | "flat"
+  strategy: "default" | "date-based" | "flat" | "simple"
 ): PathGenerator {
   switch (strategy) {
     case "default":
@@ -116,6 +160,8 @@ export function createPathGenerator(
       return new DateBasedPathGenerator();
     case "flat":
       return new FlatPathGenerator();
+    case "simple":
+      return new SimplePathGenerator();
     default:
       return new DefaultPathGenerator();
   }

@@ -8,7 +8,7 @@ export class MockPrismaClient {
 
   media = {
     create: jest.fn(async ({ data }: any) => {
-      const id = `mock-id-${this.idCounter++}`;
+      const id = data.id || `mock-id-${this.idCounter++}`;
       const record = {
         id,
         ...data,

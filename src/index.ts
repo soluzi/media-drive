@@ -28,6 +28,9 @@ export * from "./factory";
 // ==================== HTTP Adapters ====================
 export * from "./http";
 
+// ==================== Migration Utilities ====================
+export * from "./migration";
+
 // ==================== Re-export for Convenience ====================
 export { createMediaLibrary } from "./factory";
 export { MediaLibrary } from "./media/media-library";

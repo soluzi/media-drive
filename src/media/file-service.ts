@@ -34,6 +34,7 @@ export interface UploadResult {
   size: number;
   mimeType: string;
   conversions: Record<string, { path: string; size: number }>;
+  mediaId?: string;
 }
 
 export class FileService {
@@ -119,13 +120,19 @@ export class FileService {
       }
     }
 
-    return {
+    const result: UploadResult = {
       fileName,
       path: pathResult.path,
       size: ctx.buffer.length,
       mimeType,
       conversions: conversionResults,
     };
+    
+    if (pathResult.mediaId) {
+      result.mediaId = pathResult.mediaId;
+    }
+    
+    return result;
   }
 
   /**
