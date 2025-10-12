@@ -10,7 +10,7 @@ datasource db {
 
 model Media {
     id                String   @id @default(cuid())
-    path              String?  // Stored file path from path generator (optional for v2 backward compatibility)
+    path              String? // Stored file path from path generator (optional for v2 backward compatibility)
     model_type        String
     model_id          String
     collection_name   String   @default("default")
@@ -19,9 +19,9 @@ model Media {
     mime_type         String
     disk              String   @default("local")
     size              Int
-    manipulations     Json?
-    custom_properties Json?
-    responsive_images Json?
+    manipulations     Json?    @default("{}")
+    custom_properties Json?    @default("{}")
+    responsive_images Json?    @default("{}")
     order_column      Int?
     created_at        DateTime @default(now())
     updated_at        DateTime @updatedAt
