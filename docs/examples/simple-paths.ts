@@ -1,25 +1,27 @@
 /**
  * Simple Path Strategy Example
- * 
+ *
  * This example demonstrates the new simple path strategy that uses
  * the format: mediaId/fileName
  */
 
 import { createMediaLibrary } from "../../src/factory";
 import { defineConfig } from "../../src/config/schema";
+import { Readable } from "stream";
 
 // Configure Media Drive to use simple path strategy
 const config = defineConfig({
   pathGeneration: {
-    strategy: "simple" as const, // Uses mediaId/fileName format
+    strategy: "simple", // Uses mediaId/fileName format
   },
   queue: {
-    driver: "in-memory" as const,
+    driver: "in-memory",
+    name: "in-memory",
   },
   disk: "local",
   disks: {
     local: {
-      driver: "local" as const,
+      driver: "local",
       root: "uploads",
       public_base_url: "http://localhost:3000/uploads",
     },
@@ -47,7 +49,7 @@ async function demonstrateSimplePaths() {
     destination: "",
     filename: "",
     path: "",
-    stream: null as any,
+    stream: null as unknown as Readable,
   };
 
   try {
@@ -77,7 +79,7 @@ async function demonstrateSimplePaths() {
       destination: "",
       filename: "",
       path: "",
-      stream: null as any,
+      stream: null as unknown as Readable,
     };
 
     const result2 = await mediaLibrary.attachFile("Post", "456", mockFile2, {
@@ -91,12 +93,17 @@ async function demonstrateSimplePaths() {
     console.log("\n✅ File with conversions uploaded!");
     console.log("Media ID:", result2.id);
     console.log("Original path:", `${result2.id}/${result2.file_name}`);
-    console.log("Thumbnail path:", `${result2.id}/${result2.file_name.replace('.png', '-thumbnail.png')}`);
+    console.log(
+      "Thumbnail path:",
+      `${result2.id}/${result2.file_name.replace(".png", "-thumbnail.png")}`
+    );
 
     // Get conversion URL
-    const thumbnailUrl = await mediaLibrary.resolveFileUrl(result2.id, "thumbnail");
+    const thumbnailUrl = await mediaLibrary.resolveFileUrl(
+      result2.id,
+      "thumbnail"
+    );
     console.log("Thumbnail URL:", thumbnailUrl);
-
   } catch (error) {
     console.error("❌ Error:", error);
   }

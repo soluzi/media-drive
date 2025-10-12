@@ -69,7 +69,7 @@ export async function doctorCommand(): Promise<void> {
     .join(", ");
   checks.push({
     name: "Environment variables",
-    status: "ℹ️" as any,
+    status: "⚠️",
     message: envStatus,
   });
 

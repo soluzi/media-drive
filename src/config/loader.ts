@@ -23,7 +23,7 @@ function loadFromEnv(): Partial<MediaConfig> {
 
   if (env["MEDIA_LOG_LEVEL"]) {
     config.logging = {
-      level: env["MEDIA_LOG_LEVEL"] as any,
+      level: env["MEDIA_LOG_LEVEL"] as "debug" | "info" | "warn" | "error",
     };
   }
 
@@ -37,7 +37,7 @@ function loadFromEnv(): Partial<MediaConfig> {
   if (env["S3_KEY"] && env["S3_SECRET"] && env["S3_BUCKET"]) {
     if (!config.disks) config.disks = {};
     config.disks["s3"] = {
-      driver: "s3" as const,
+      driver: "s3",
       key: env["S3_KEY"],
       secret: env["S3_SECRET"],
       region: env["S3_REGION"] || "us-east-1",
@@ -57,7 +57,7 @@ function loadFromEnv(): Partial<MediaConfig> {
   ) {
     if (!config.disks) config.disks = {};
     config.disks["bunnycdn"] = {
-      driver: "bunnycdn" as const,
+      driver: "bunnycdn",
       storage_zone: env["BUNNY_STORAGE_ZONE"],
       api_key: env["BUNNY_API_KEY"],
       pull_zone: env["BUNNY_PULL_ZONE"],

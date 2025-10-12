@@ -35,7 +35,7 @@ describe("QueueDriver Contract", () => {
 
       beforeEach(() => {
         if ("clear" in driver) {
-          (driver as any).clear();
+          (driver as InMemoryQueueDriver).clear();
         }
       });
 

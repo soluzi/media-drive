@@ -2,6 +2,7 @@
  * Factory Tests
  */
 
+import { PrismaClient } from "@prisma/client";
 import { createMediaLibrary } from "../src/factory";
 import { MockPrismaClient } from "./__mocks__/mock-prisma.client";
 import { MockStorageDriver } from "./__mocks__/mock-storage.driver";
@@ -29,7 +30,7 @@ describe("createMediaLibrary", () => {
           },
         },
       },
-      prisma: mockPrisma as any,
+      prisma: mockPrisma as unknown as PrismaClient,
     });
 
     expect(mediaLibrary).toBeDefined();
@@ -49,7 +50,7 @@ describe("createMediaLibrary", () => {
           },
         },
       },
-      prisma: mockPrisma as any,
+      prisma: mockPrisma as unknown as PrismaClient,
     });
 
     expect(mediaLibrary).toBeDefined();
@@ -59,7 +60,7 @@ describe("createMediaLibrary", () => {
     const mockStorage = new MockStorageDriver();
 
     const mediaLibrary = createMediaLibrary({
-      prisma: mockPrisma as any,
+      prisma: mockPrisma as unknown as PrismaClient,
       providers: {
         storageDriver: mockStorage,
       },
@@ -75,7 +76,7 @@ describe("createMediaLibrary", () => {
       config: {
         disk: "mock",
       },
-      prisma: mockPrisma as any,
+      prisma: mockPrisma as unknown as PrismaClient,
       providers: {
         storageDriver: mockStorage,
       },
@@ -97,7 +98,7 @@ describe("createMediaLibrary", () => {
             },
           },
         },
-        prisma: mockPrisma as any,
+        prisma: mockPrisma as unknown as PrismaClient,
       });
     }).toThrow();
   });

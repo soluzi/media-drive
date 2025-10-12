@@ -54,7 +54,10 @@ export class SharpProcessor implements ConversionProcessor {
       try {
         results[name] = await this.processOne(input, options);
       } catch (error) {
-        logger.warn(`Failed to process conversion '${name}'`, error);
+        logger.warn(
+          `Failed to process conversion '${name}'`,
+          error instanceof Error ? { message: error.message } : undefined
+        );
         // Continue with other conversions even if one fails
       }
     }

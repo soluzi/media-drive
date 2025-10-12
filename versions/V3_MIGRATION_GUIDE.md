@@ -4,8 +4,6 @@
 
 Media Drive v3 introduces **stored file paths** to support non-deterministic path generators, ensuring consistent URLs regardless of your path generation strategy.
 
-> ✅ **100% Backward Compatible!** You can use v3 without migrating. See [Backward Compatibility Guide](./BACKWARD_COMPATIBILITY.md) for details.
-
 ---
 
 ## ✨ Major Improvement
@@ -474,12 +472,11 @@ npx prisma migrate dev --name remove_media_path_field
 
 ## 📖 Resources
 
-- **[Backward Compatibility Guide](./BACKWARD_COMPATIBILITY.md)** - Use v3 without migrating
 - **[V2 Migration Guide](./V2_MIGRATION_GUIDE.md)** - If upgrading from v1
-- **[Architecture Overview](../ARCHITECTURE.md)** - Deep dive into design
-- **[API Reference](../docs/api-reference.md)** - Complete API docs
-- **[Advanced Usage](../docs/advanced.md)** - Custom implementations
-- **[Storage Guide](../docs/storage.md)** - Storage driver details
+- **[Architecture Overview](./ARCHITECTURE.md)** - Deep dive into design
+- **[API Reference](./docs/api-reference.md)** - Complete API docs
+- **[Advanced Usage](./docs/advanced.md)** - Custom implementations
+- **[Storage Guide](./docs/storage.md)** - Storage driver details
 
 ---
 
