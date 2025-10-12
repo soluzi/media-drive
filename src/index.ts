@@ -28,12 +28,24 @@ export * from "./factory";
 // ==================== HTTP Adapters ====================
 export * from "./http";
 
+// ==================== Enhanced Features ====================
+export * from "./validation";
+
 // ==================== Migration Utilities ====================
 export * from "./migration";
 
+// ==================== Shared Types ====================
+export * from "./types";
+
 // ==================== Re-export for Convenience ====================
-export { createMediaLibrary } from "./factory";
+export {
+  createMediaLibrary,
+  createEnhancedMediaLibrary,
+  CreateMediaLibraryOptions,
+  CreateEnhancedMediaLibraryOptions,
+} from "./factory";
 export { MediaLibrary } from "./media/media-library";
+export { EnhancedMediaLibrary } from "./media/enhanced-media-library";
 export { defineConfig } from "./config/schema";
 
 // ==================== Backward Compatibility ====================
@@ -41,7 +53,7 @@ export { defineConfig } from "./config/schema";
 /**
  * @deprecated Use createMediaLibrary() instead
  */
-export function initMediaLibrary(_config: any): void {
+export function initMediaLibrary(_config: unknown): void {
   console.warn(
     "[DEPRECATION WARNING] initMediaLibrary() is deprecated. Use createMediaLibrary() instead."
   );

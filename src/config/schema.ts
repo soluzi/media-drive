@@ -165,6 +165,28 @@ export type DiskConfig = z.infer<typeof DiskConfigSchema>;
 export type LocalDisk = z.infer<typeof LocalDiskSchema>;
 export type S3Disk = z.infer<typeof S3DiskSchema>;
 export type BunnyCDNDisk = z.infer<typeof BunnyCDNDiskSchema>;
+export type LimitsConfig = z.infer<typeof LimitsSchema>;
+export type SecurityConfig = z.infer<typeof SecuritySchema>;
+export type UrlsConfig = z.infer<typeof UrlsSchema>;
+export type ConversionsConfig = z.infer<typeof ConversionsSchema>;
+export type ResponsiveImagesConfig = z.infer<typeof ResponsiveImagesSchema>;
+export type QueueConfig = z.infer<typeof QueueConfigSchema>;
+export type FileNamingConfig = z.infer<typeof FileNamingSchema>;
+export type PathGenerationConfig = z.infer<typeof PathGenerationSchema>;
+export type LoggingConfig = z.infer<typeof LoggingSchema>;
+export type MediaDownloaderConfig = z.infer<typeof MediaDownloaderSchema>;
+
+// ==================== Enum Types ====================
+
+export type DiskDriverType = "local" | "s3" | "bunnycdn";
+export type QueueDriverType = "bullmq" | "in-memory";
+export type FileNamingStrategy = "random" | "original" | "uuid";
+export type PathGenerationStrategy =
+  | "default"
+  | "date-based"
+  | "flat"
+  | "simple";
+export type ImageFormat = "jpeg" | "png" | "webp" | "avif";
 
 // ==================== Helper to Create Config ====================
 
