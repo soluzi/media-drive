@@ -1,7 +1,7 @@
 /**
  * S3 Storage Example
  *
- * This example shows how to configure Media Drive v2 with AWS S3 storage
+ * This example shows how to configure Media Drive v3 with AWS S3 storage
  */
 
 import { createMediaLibrary } from "media-drive";

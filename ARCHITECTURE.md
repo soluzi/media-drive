@@ -1,8 +1,8 @@
-# Media Drive v2 - Architecture Overview
+# Media Drive v3 - Architecture Overview
 
 ## Summary
 
-Media Drive v2 is a complete architectural rewrite of the media library package with modularity, extensibility, and type safety as core principles. The refactoring maintains **100% backward compatibility** with the public API while introducing a clean, plugin-based architecture.
+Media Drive v3 builds on the modular v2 architecture with enhanced HTTP features, built-in validation, and REST API capabilities. The package maintains **100% backward compatibility** while introducing powerful new features for modern web applications.
 
 ## Key Achievements
 

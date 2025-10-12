@@ -1,4 +1,4 @@
-# Media Drive v3
+# Media Drive v3.0.0
 
 > Modular, TypeScript-first media library for Node.js applications  
 > Inspired by Laravel Media Library
@@ -10,12 +10,9 @@
 
 See the **[V3 Migration & Feature Guide](./versions/V3_MIGRATION_GUIDE.md)** for a comprehensive upgrade guide. v3.0 introduces **stored file paths** to support non-deterministic path generators.
 
-> ✅ **v3 is 100% backward compatible!** You can upgrade without migration. See [Backward Compatibility Guide](./versions/BACKWARD_COMPATIBILITY.md) for details.
-
 Quick links:
 
 - 📚 [Full V3 Feature Guide](./versions/V3_MIGRATION_GUIDE.md) - Complete overview with examples
-- ✅ [Backward Compatibility Guide](./versions/BACKWARD_COMPATIBILITY.md) - Use v3 without migrating
 - 🔄 [V2 Migration Guide](./versions/V2_MIGRATION_GUIDE.md) - If upgrading from v1
 
 ## ✨ Features
@@ -42,6 +39,8 @@ npm install @prisma/client prisma
 ```
 
 ## 🚀 Quick Start
+
+> 💡 **New to v3?** We offer two setups: **Standard** (use with multer) and **Enhanced** (built-in multipart + validation). See [Choosing Your Setup](./docs/choosing-your-setup.md) to decide.
 
 ### 1. Initialize
 
@@ -72,38 +71,70 @@ export default defineConfig({
 
 ### 3. Use
 
+**Option A: Standard (with multer)**
+
 ```typescript
 import { createMediaLibrary } from "media-drive";
-import { PrismaClient } from "@prisma/client";
+import multer from "multer";
 
-const prisma = new PrismaClient();
+const upload = multer({ storage: multer.memoryStorage() });
 const mediaLibrary = createMediaLibrary({ prisma });
 
-// Attach a file
-const media = await mediaLibrary.attachFile("User", "123", req.file, {
-  collection: "avatar",
-  conversions: {
-    thumb: { width: 150, height: 150, fit: "cover" },
+app.post("/upload", upload.single("file"), async (req, res) => {
+  const media = await mediaLibrary.attachFile("User", "123", req.file!, {
+    collection: "avatar",
+    conversions: { thumb: { width: 150, height: 150 } },
+  });
+
+  res.json({ url: await mediaLibrary.resolveFileUrl(media.id) });
+});
+```
+
+**Option B: Enhanced (no multer needed!)**
+
+```typescript
+import { createEnhancedMediaLibrary } from "media-drive";
+
+const mediaLibrary = createEnhancedMediaLibrary({
+  config: {
+    disk: "local",
+    http: { enabled: true, multipart: { enabled: true } },
+    validation: {
+      fileTypes: { images: ["jpeg", "png"], documents: ["pdf"] },
+    },
   },
 });
 
-// Get URL
-const url = await mediaLibrary.resolveFileUrl(media.id);
+app.post(
+  "/upload",
+  mediaLibrary.uploadMiddleware(), // Built-in multipart parsing!
+  async (req, res) => {
+    const result = await mediaLibrary.attachFromRequest(req, {
+      modelType: "User",
+      modelId: "123",
+    });
+    res.json(result);
+  }
+);
 ```
+
+> 📖 **Which one?** See [Choosing Your Setup](./docs/choosing-your-setup.md)
 
 ## 📖 Documentation
 
+- **[Choosing Your Setup](./docs/choosing-your-setup.md)** - Standard vs Enhanced: Which to use?
 - **[Getting Started](./docs/getting-started.md)** - Installation and basic usage
 - **[Configuration](./docs/configuration.md)** - Complete configuration guide
 - **[API Reference](./docs/api-reference.md)** - Full API documentation
 - **[Storage Drivers](./docs/storage.md)** - Storage backend setup
 - **[Advanced Usage](./docs/advanced.md)** - Custom drivers and strategies
 - **[Examples](./docs/examples/)** - Real-world usage examples
+- **[Troubleshooting](./docs/troubleshooting.md)** - Common issues and solutions
 - **[Architecture](./ARCHITECTURE.md)** - System design and patterns
 
 ## 🏗️ Architecture
 
-Media Drive v2 features a clean, modular architecture:
+Media Drive v3 features a clean, modular architecture:
 
 ```
 src/
@@ -157,7 +188,7 @@ npm run test:coverage     # With coverage report
 
 ## 📝 Migration from v1
 
-Media Drive v2 maintains backward compatibility:
+Media Drive v3 maintains backward compatibility:
 
 ```typescript
 // v1 (still works with deprecation warning)

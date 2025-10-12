@@ -1,4 +1,4 @@
-# Getting Started with Media Drive v2
+# Getting Started with Media Drive v3
 
 Media Drive is a modular, TypeScript-first media library for Node.js applications, inspired by Laravel Media Library. It provides a clean, extensible architecture for managing file uploads, conversions, and storage.
 

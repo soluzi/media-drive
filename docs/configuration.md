@@ -1,6 +1,6 @@
 # Configuration Guide
 
-Media Drive v2 uses a comprehensive, type-safe configuration system built with Zod. Configuration can be provided via TypeScript files, environment variables, or programmatically.
+Media Drive v3 uses a comprehensive, type-safe configuration system built with Zod. Configuration can be provided via TypeScript files, environment variables, or programmatically.
 
 ## Configuration File
 

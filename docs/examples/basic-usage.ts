@@ -1,7 +1,7 @@
 /**
  * Basic Usage Example
  *
- * This example shows the most common usage patterns for Media Drive v2
+ * This example shows the most common usage patterns for Media Drive v3
  */
 
 import { createMediaLibrary } from "media-drive";
@@ -25,9 +25,6 @@ const mediaLibrary = createMediaLibrary({
     },
     limits: {
       maxFileSize: 10 * 1024 * 1024, // 10MB
-    },
-    security: {
-      allowedMime: ["image/jpeg", "image/png", "image/webp"],
     },
   },
   prisma,

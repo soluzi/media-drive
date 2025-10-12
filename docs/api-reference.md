@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API documentation for Media Drive v2.
+Complete API documentation for Media Drive v3.
 
 ## Factory Function
 

@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This guide helps you resolve common issues when using Media Drive v2 in your projects.
+This guide helps you resolve common issues when using Media Drive v3 in your projects.
 
 ## Common Installation Issues
 
