@@ -1,4 +1,6 @@
 import { jest } from "@jest/globals";
+import { Readable } from "stream";
+import { MediaRecord } from "../../src/types";
 
 /**
  * Test helper functions for media library tests
@@ -17,14 +19,17 @@ export function createMockFile(
     destination: "",
     filename: "",
     path: "",
-    stream: null as any,
+    stream: {} as Readable,
     ...options,
   };
 }
 
-export function createMockMediaRecord(options: Partial<any> = {}): any {
+export function createMockMediaRecord(
+  options: Partial<MediaRecord> = {}
+): MediaRecord {
   return {
     id: "media-123",
+    path: "user/user-123/default/randomfilename.jpg",
     model_type: "user",
     model_id: "user-123",
     collection_name: "default",

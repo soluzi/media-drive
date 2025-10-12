@@ -2,11 +2,13 @@
  * MediaLibrary Integration Tests
  */
 
+import { PrismaClient } from "@prisma/client";
 import { createMediaLibrary } from "../../src/factory";
 import { MediaLibrary } from "../../src/media/media-library";
 import { MockPrismaClient } from "../__mocks__/mock-prisma.client";
 import { MockStorageDriver } from "../__mocks__/mock-storage.driver";
 import { InMemoryQueueDriver } from "../../src/queue/in-memory-driver";
+import { Readable } from "stream";
 
 describe("MediaLibrary", () => {
   let mediaLibrary: MediaLibrary;
@@ -31,7 +33,7 @@ describe("MediaLibrary", () => {
           maxFileSize: 10 * 1024 * 1024,
         },
       },
-      prisma: mockPrisma as any,
+      prisma: mockPrisma as unknown as PrismaClient,
       providers: {
         storageDriver: mockStorage,
         queueDriver: new InMemoryQueueDriver(),
@@ -56,7 +58,7 @@ describe("MediaLibrary", () => {
         destination: "",
         filename: "",
         path: "",
-        stream: null as any,
+        stream: null as unknown as Readable,
       };
 
       const result = await mediaLibrary.attachFile("User", "123", file, {
@@ -82,7 +84,7 @@ describe("MediaLibrary", () => {
         destination: "",
         filename: "",
         path: "",
-        stream: null as any,
+        stream: null as unknown as Readable,
       };
 
       await mediaLibrary.attachFile("User", "123", file);
@@ -102,7 +104,7 @@ describe("MediaLibrary", () => {
         destination: "",
         filename: "",
         path: "",
-        stream: null as any,
+        stream: null as unknown as Readable,
       };
 
       const result = await mediaLibrary.attachFile("Post", "456", file, {
@@ -125,7 +127,7 @@ describe("MediaLibrary", () => {
         destination: "",
         filename: "",
         path: "",
-        stream: null as any,
+        stream: null as unknown as Readable,
       };
 
       await mediaLibrary.attachFile("User", "123", file);
@@ -149,7 +151,7 @@ describe("MediaLibrary", () => {
         destination: "",
         filename: "",
         path: "",
-        stream: null as any,
+        stream: null as unknown as Readable,
       };
 
       await mediaLibrary.attachFile("User", "123", file, {
@@ -177,7 +179,7 @@ describe("MediaLibrary", () => {
         destination: "",
         filename: "",
         path: "",
-        stream: null as any,
+        stream: null as unknown as Readable,
       };
 
       const result = await mediaLibrary.attachFile("User", "123", file);
@@ -203,7 +205,7 @@ describe("MediaLibrary", () => {
         destination: "",
         filename: "",
         path: "",
-        stream: null as any,
+        stream: null as unknown as Readable,
       };
 
       const result = await mediaLibrary.attachFile("User", "123", file);
@@ -225,7 +227,7 @@ describe("MediaLibrary", () => {
         destination: "",
         filename: "",
         path: "",
-        stream: null as any,
+        stream: null as unknown as Readable,
       };
 
       const result = await mediaLibrary.attachFile("User", "123", file);
