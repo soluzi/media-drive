@@ -17,7 +17,7 @@ export interface JobInfo {
   id: string;
   status: JobStatus;
   progress?: number | undefined;
-  result?: any;
+  result?: unknown;
   error?: string | undefined;
 }
 

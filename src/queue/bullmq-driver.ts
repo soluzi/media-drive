@@ -4,10 +4,11 @@
  * Implements async job processing with BullMQ and Redis
  */
 
-import { Queue, Worker, Job } from "bullmq";
+import { Queue, Worker, Job, ConnectionOptions } from "bullmq";
 import {
   QueueDriver,
   JobInfo,
+  JobStatus,
   QueueStats,
   ConversionJobData,
 } from "../core/contracts";
@@ -29,7 +30,7 @@ export interface BullMQConfig {
 export class BullMQDriver implements QueueDriver {
   private queue: Queue;
   private worker: Worker | null = null;
-  private connectionOptions: any;
+  private connectionOptions: ConnectionOptions;
 
   constructor(config: BullMQConfig) {
     // Build connection options, omitting undefined values
@@ -72,7 +73,10 @@ export class BullMQDriver implements QueueDriver {
     });
 
     this.worker.on("failed", (job, error) => {
-      logger.error(`Job ${job?.id} failed`, error);
+      logger.error(
+        `Job ${job?.id} failed`,
+        error instanceof Error ? { message: error.message } : undefined
+      );
     });
 
     logger.info("BullMQ worker started");
@@ -118,7 +122,7 @@ export class BullMQDriver implements QueueDriver {
 
       return {
         id: jobId,
-        status: state as any,
+        status: state as JobStatus,
         progress: typeof progress === "number" ? progress : undefined,
         result: job.returnvalue,
         error: job.failedReason,

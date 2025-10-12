@@ -66,7 +66,10 @@ export class SimplePathGenerator implements PathGenerator {
 
   generateConversion(ctx: PathContext, conversionName: string): PathResult {
     // For conversions, we need the mediaId from the original path
-    const mediaId = (ctx as any).mediaId || ctx.modelId;
+    const mediaId =
+      "mediaId" in ctx
+        ? (ctx as PathContext & { mediaId: string }).mediaId
+        : ctx.modelId;
     const ext = ctx.fileName.substring(ctx.fileName.lastIndexOf("."));
     const base = getBaseName(ctx.fileName);
     const fileName = `${base}-${conversionName}${ext}`;

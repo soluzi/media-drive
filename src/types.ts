@@ -1,8 +1,19 @@
+/**
+ * Shared Types and Interfaces
+ *
+ * This file contains domain-specific types used across the media library.
+ * For implementation contracts, see src/core/contracts/
+ */
+
 import { Prisma } from "@prisma/client";
 import { Request } from "express";
+import { ConversionOptions } from "./core/contracts";
 
-export interface MediaRecord extends Prisma.MediaGetPayload<{}> {
+// ==================== Media Types ====================
+
+export interface MediaRecord {
   id: string;
+  path: string | null;
   model_type: string;
   model_id: string;
   collection_name: string;
@@ -19,38 +30,26 @@ export interface MediaRecord extends Prisma.MediaGetPayload<{}> {
   updated_at: Date;
 }
 
-export interface StoredObject {
-  path: string;
-  size: number;
-  lastModified?: Date | undefined;
-  etag?: string | undefined;
+export interface AttachFileOptions {
+  collection?: string | undefined;
+  name?: string | undefined;
+  disk?: string | undefined;
+  conversions?: Record<string, ConversionOptions> | undefined;
+  customProperties?: Record<string, Prisma.JsonValue> | undefined;
 }
 
-export interface StorageDriver {
-  put(
-    path: string,
-    contents: Buffer | string,
-    options?: PutOptions
-  ): Promise<StoredObject>;
-  get(path: string): Promise<Buffer>;
-  delete(path: string): Promise<void>;
-  exists(path: string): Promise<boolean>;
-  url(path: string): string;
-  temporaryUrl(path: string, expiresIn?: number): Promise<string>;
+export interface AttachFromUrlOptions extends AttachFileOptions {
+  headers?: Record<string, string> | undefined;
+  timeout?: number | undefined;
 }
 
-export interface PutOptions {
-  visibility?: "public" | "private";
-  metadata?: Record<string, string>;
-  contentType?: string;
+export interface ConversionJob {
+  mediaId: string;
+  conversion: string;
+  options: ConversionOptions;
 }
 
-export interface MediaLibraryConfig {
-  default_disk: "local" | "s3" | "bunnycdn";
-  local: LocalConfig;
-  s3?: S3Config;
-  bunnycdn?: BunnyCDNConfig;
-}
+// ==================== Storage Config Types ====================
 
 export interface LocalConfig {
   root: string;
@@ -62,79 +61,62 @@ export interface S3Config {
   secret: string;
   region: string;
   bucket: string;
-  root?: string;
+  root?: string | undefined;
   url?: string | undefined;
   endpoint?: string | undefined;
-  use_path_style_endpoint?: boolean;
+  use_path_style_endpoint?: boolean | undefined;
 }
 
 export interface BunnyCDNConfig {
   storage_zone: string;
   api_key: string;
   pull_zone: string;
-  root?: string;
-  region?: string;
+  root?: string | undefined;
+  region?: string | undefined;
 }
 
-export interface ConversionOptions extends Prisma.JsonObject {
-  width?: number;
-  height?: number;
-  fit?: "cover" | "contain" | "fill" | "inside" | "outside";
-  quality?: number;
-  format?: "jpeg" | "png" | "webp" | "avif";
-  background?: string;
-}
-
-export interface AttachFileOptions {
-  collection?: string;
-  name?: string | undefined;
-  disk?: "local" | "s3" | "bunnycdn" | undefined;
-  conversions?: Record<string, ConversionOptions>;
-  customProperties?: Record<string, Prisma.JsonValue>;
-}
-
-export interface AttachFromUrlOptions extends AttachFileOptions {
-  headers?: Record<string, string>;
-  timeout?: number;
-}
+// ==================== HTTP Types ====================
 
 export interface MediaLibraryService {
   attachFile(
     modelType: string,
     modelId: string,
     file: Express.Multer.File,
-    options?: AttachFileOptions
+    options?: AttachFileOptions | undefined
   ): Promise<MediaRecord>;
 
   attachFromUrl(
     modelType: string,
     modelId: string,
     url: string,
-    options?: AttachFromUrlOptions
+    options?: AttachFromUrlOptions | undefined
   ): Promise<MediaRecord>;
 
   list(
     modelType: string,
     modelId: string,
-    collection?: string
+    collection?: string | undefined
   ): Promise<MediaRecord[]>;
 
   remove(mediaId: string): Promise<void>;
 
   resolveFileUrl(
     mediaId: string,
-    conversion?: string,
-    signed?: boolean,
-    redirect?: boolean
+    conversion?: string | undefined,
+    signed?: boolean | undefined,
+    redirect?: boolean | undefined
   ): Promise<string>;
 }
 
 export interface MediaRequest extends Request {
-  mediaLibrary?: MediaLibraryService;
+  mediaLibrary?: MediaLibraryService | undefined;
 }
 
-export interface ConversionJob {
-  mediaId: string;
-  conversion: string;
-  options: ConversionOptions;
+// ==================== Legacy v1 Config Types ====================
+
+export interface MediaLibraryConfig {
+  default_disk: "local" | "s3" | "bunnycdn";
+  local: LocalConfig;
+  s3?: S3Config | undefined;
+  bunnycdn?: BunnyCDNConfig | undefined;
 }

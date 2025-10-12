@@ -20,7 +20,7 @@ interface StoredJob {
   data: ConversionJobData;
   status: JobInfo["status"];
   progress: number;
-  result?: any;
+  result?: unknown;
   error?: string | undefined;
   createdAt: Date;
 }
@@ -86,7 +86,10 @@ export class InMemoryQueueDriver implements QueueDriver {
       job.status = "failed";
       job.error = error instanceof Error ? error.message : "Unknown error";
 
-      logger.error(`Job ${jobId} failed`, error);
+      logger.error(
+        `Job ${jobId} failed`,
+        error instanceof Error ? { message: error.message } : undefined
+      );
     }
   }
 

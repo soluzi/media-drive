@@ -8,10 +8,10 @@
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
 export interface Logger {
-  debug(message: string, meta?: any): void;
-  info(message: string, meta?: any): void;
-  warn(message: string, meta?: any): void;
-  error(message: string, meta?: any): void;
+  debug(message: string, meta?: Record<string, unknown> | undefined): void;
+  info(message: string, meta?: Record<string, unknown> | undefined): void;
+  warn(message: string, meta?: Record<string, unknown> | undefined): void;
+  error(message: string, meta?: Record<string, unknown> | undefined): void;
 }
 
 class ConsoleLogger implements Logger {
@@ -28,25 +28,25 @@ class ConsoleLogger implements Logger {
     return targetLevelIndex >= currentLevelIndex;
   }
 
-  debug(message: string, meta?: any): void {
+  debug(message: string, meta?: Record<string, unknown> | undefined): void {
     if (this.shouldLog("debug")) {
       console.debug(`[DEBUG] ${message}`, meta || "");
     }
   }
 
-  info(message: string, meta?: any): void {
+  info(message: string, meta?: Record<string, unknown> | undefined): void {
     if (this.shouldLog("info")) {
       console.info(`[INFO] ${message}`, meta || "");
     }
   }
 
-  warn(message: string, meta?: any): void {
+  warn(message: string, meta?: Record<string, unknown> | undefined): void {
     if (this.shouldLog("warn")) {
       console.warn(`[WARN] ${message}`, meta || "");
     }
   }
 
-  error(message: string, meta?: any): void {
+  error(message: string, meta?: Record<string, unknown> | undefined): void {
     if (this.shouldLog("error")) {
       console.error(`[ERROR] ${message}`, meta || "");
     }

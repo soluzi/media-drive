@@ -85,7 +85,7 @@ export async function migrateMediaPaths(
     // Find all media records without a path
     const mediasWithoutPath = await prisma.media.findMany({
       where: {
-        OR: [{ path: null as any }, { path: "" }],
+        OR: [{ path: null }, { path: "" }],
       },
       orderBy: {
         created_at: "asc",
@@ -112,7 +112,7 @@ export async function migrateMediaPaths(
       for (const media of batch) {
         try {
           // Check if path already exists (shouldn't happen, but be safe)
-          if ((media as any).path) {
+          if (media.path) {
             result.skipped++;
             logger.debug(`Skipping media ${media.id} - path already exists`);
             continue;
@@ -175,7 +175,10 @@ export async function migrateMediaPaths(
 
     return result;
   } catch (error) {
-    logger.error("Migration failed:", error);
+    logger.error(
+      "Migration failed:",
+      error instanceof Error ? { message: error.message } : {}
+    );
     throw error;
   }
 }
@@ -198,7 +201,7 @@ export async function checkMigrationStatus(prisma: PrismaClient): Promise<{
     prisma.media.count(),
     prisma.media.count({
       where: {
-        OR: [{ path: null as any }, { path: "" }],
+        OR: [{ path: null }, { path: "" }],
       },
     }),
   ]);

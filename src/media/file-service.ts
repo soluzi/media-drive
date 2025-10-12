@@ -12,7 +12,6 @@ import {
   ConversionOptions,
 } from "../core/contracts";
 import { detectMimeType } from "./file-type-detector";
-import { validateFileSize, validateMimeType } from "./validation";
 import { isImageMimeType } from "./file-type-detector";
 import { MediaConfig } from "../config/schema";
 import { getLogger } from "../core/logger";
@@ -56,9 +55,12 @@ export class FileService {
     // Detect MIME type
     const mimeType = await detectMimeType(ctx.buffer);
 
-    // Validate
-    validateFileSize(ctx.buffer.length, this.config.limits.maxFileSize);
-    validateMimeType(mimeType, this.config);
+    // Validate file size
+    if (ctx.buffer.length > this.config.limits.maxFileSize) {
+      throw new Error(
+        `File size ${ctx.buffer.length} exceeds maximum ${this.config.limits.maxFileSize} bytes`
+      );
+    }
 
     // Generate filename
     const fileName = this.fileNamer.generate(ctx.originalName);
@@ -127,11 +129,11 @@ export class FileService {
       mimeType,
       conversions: conversionResults,
     };
-    
+
     if (pathResult.mediaId) {
       result.mediaId = pathResult.mediaId;
     }
-    
+
     return result;
   }
 
@@ -149,7 +151,10 @@ export class FileService {
         await this.storage.delete(conversionPath);
         logger.debug(`Conversion deleted: ${conversionPath}`);
       } catch (error) {
-        logger.warn(`Failed to delete conversion: ${conversionPath}`, error);
+        logger.warn(
+          `Failed to delete conversion: ${conversionPath}`,
+          error instanceof Error ? { message: error.message } : undefined
+        );
       }
     }
   }

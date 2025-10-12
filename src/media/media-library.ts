@@ -4,7 +4,7 @@
  * Thin orchestrator that coordinates file operations, conversions, and database records
  */
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import axios from "axios";
 import {
   StorageDriver,
@@ -20,40 +20,10 @@ import { FileService } from "./file-service";
 import { UrlService } from "./url-service";
 import { NotFoundError } from "../core/errors";
 import { getLogger } from "../core/logger";
+import { Readable } from "stream";
+import { MediaRecord, AttachFileOptions, AttachFromUrlOptions } from "../types";
 
 const logger = getLogger();
-
-export interface MediaRecord {
-  id: string;
-  path: string; // Stored file path from path generator
-  model_type: string;
-  model_id: string;
-  collection_name: string;
-  name: string;
-  file_name: string;
-  mime_type: string;
-  disk: string;
-  size: number;
-  manipulations: any;
-  custom_properties: any;
-  responsive_images: any;
-  order_column: number | null;
-  created_at: Date;
-  updated_at: Date;
-}
-
-export interface AttachFileOptions {
-  collection?: string | undefined;
-  name?: string | undefined;
-  disk?: string | undefined;
-  conversions?: Record<string, ConversionOptions> | undefined;
-  customProperties?: Record<string, any> | undefined;
-}
-
-export interface AttachFromUrlOptions extends AttachFileOptions {
-  headers?: Record<string, string> | undefined;
-  timeout?: number | undefined;
-}
 
 /**
  * Main MediaLibrary Service
@@ -127,9 +97,9 @@ export class MediaLibrary {
         mime_type: result.mimeType,
         disk,
         size: result.size,
-        manipulations: conversions as any,
-        custom_properties: customProperties as any,
-        responsive_images: result.conversions as any,
+        manipulations: conversions as Prisma.JsonObject, // Prisma.Json type compatibility
+        custom_properties: customProperties as Prisma.JsonObject, // Prisma.Json type compatibility
+        responsive_images: result.conversions as Prisma.JsonObject, // Prisma.Json type compatibility
       },
     });
 
@@ -182,7 +152,7 @@ export class MediaLibrary {
       destination: "",
       filename: "",
       path: "",
-      stream: null as any,
+      stream: {} as Readable,
     };
 
     return this.attachFile(modelType, modelId, file, {
@@ -202,7 +172,11 @@ export class MediaLibrary {
     modelId: string,
     collection?: string | undefined
   ): Promise<MediaRecord[]> {
-    const where: any = {
+    const where: {
+      model_type: string;
+      model_id: string;
+      collection_name?: string;
+    } = {
       model_type: modelType,
       model_id: modelId,
     };
@@ -243,7 +217,7 @@ export class MediaLibrary {
     }
 
     // Use stored path from database (works with any path generator)
-    let originalPath: string = (media as any).path;
+    let originalPath: string = media.path || "";
 
     // Fallback for backward compatibility with existing records
     if (!originalPath) {
@@ -300,7 +274,7 @@ export class MediaLibrary {
       path = conversions[conversion].path;
     } else {
       // Use stored path from database (works with any path generator)
-      path = (media as any).path;
+      path = media.path || "";
 
       // Fallback for backward compatibility with existing records
       if (!path) {

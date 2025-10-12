@@ -23,7 +23,15 @@ export class S3StorageDriver implements StorageDriver {
   private publicUrl: string | undefined;
 
   constructor(config: S3Disk) {
-    const clientConfig: any = {
+    const clientConfig: {
+      region: string;
+      credentials: {
+        accessKeyId: string;
+        secretAccessKey: string;
+      };
+      endpoint?: string;
+      forcePathStyle?: boolean;
+    } = {
       region: config.region,
       credentials: {
         accessKeyId: config.key,
@@ -105,7 +113,8 @@ export class S3StorageDriver implements StorageDriver {
 
       // Convert stream to buffer
       const chunks: Uint8Array[] = [];
-      for await (const chunk of response.Body as any) {
+      const body = response.Body as AsyncIterable<Uint8Array>;
+      for await (const chunk of body) {
         chunks.push(chunk);
       }
       return Buffer.concat(chunks);

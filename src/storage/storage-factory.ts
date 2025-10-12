@@ -5,7 +5,6 @@
  */
 
 import { StorageDriver } from "../core/contracts";
-import { ConfigurationError } from "../core/errors";
 import { DiskConfig } from "../config/schema";
 import { LocalStorageDriver } from "./local/driver.local";
 import { S3StorageDriver } from "./s3/driver.s3";
@@ -21,10 +20,5 @@ export function createStorageDriver(config: DiskConfig): StorageDriver {
 
     case "bunnycdn":
       return new BunnyCDNStorageDriver(config);
-
-    default:
-      throw new ConfigurationError(
-        `Unknown storage driver: ${(config as any).driver}`
-      );
   }
 }
