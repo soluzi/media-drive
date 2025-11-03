@@ -4,8 +4,8 @@
  * Generate media.config.ts file
  */
 
-import { writeFileSync } from "fs";
-import { join } from "path";
+import { writeFileSync, existsSync, mkdirSync } from "fs";
+import { join, resolve } from "path";
 
 const CONFIG_TEMPLATE = `import { defineConfig } from "media-drive";
 
@@ -104,10 +104,25 @@ export default defineConfig({
 });
 `;
 
-export function initCommand(targetDir: string = process.cwd()): void {
-  const configPath = join(targetDir, "media.config.ts");
+export function initCommand(targetDir: string | undefined = undefined): void {
+  // Resolve the target directory (use cwd if not specified)
+  const resolvedDir = targetDir ? resolve(targetDir) : process.cwd();
+  const configPath = join(resolvedDir, "media.config.ts");
 
   try {
+    // Create directory if it doesn't exist
+    if (!existsSync(resolvedDir)) {
+      mkdirSync(resolvedDir, { recursive: true });
+      console.log(`📁 Created directory: ${resolvedDir}`);
+    }
+
+    // Check if config already exists
+    if (existsSync(configPath)) {
+      console.error(`❌ Config file already exists at ${configPath}`);
+      console.log("Remove it first or use a different path with --path");
+      process.exit(1);
+    }
+
     writeFileSync(configPath, CONFIG_TEMPLATE, "utf8");
     console.log(`✅ Created media.config.ts at ${configPath}`);
     console.log("\nNext steps:");
