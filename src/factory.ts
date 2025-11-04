@@ -61,7 +61,15 @@ export function createMediaLibrary(
   const config = loadConfig(options.config);
 
   // Setup logger
-  setLogger(createLogger(config.logging.level));
+  if (!!config.logging) {
+    setLogger(
+      createLogger(
+        config.logging.level,
+        config.logging.levels,
+        config.logging.enabled
+      )
+    );
+  }
 
   // Get or create Prisma client
   const prisma = options.prisma || new PrismaClient();
@@ -198,7 +206,15 @@ export function createEnhancedMediaLibrary(
   const config = loadConfig(options.config) as EnhancedMediaLibraryConfig;
 
   // Setup logger
-  setLogger(createLogger(config.logging.level));
+  if (!!config.logging) {
+    setLogger(
+      createLogger(
+        config.logging.level,
+        config.logging.levels,
+        config.logging.enabled
+      )
+    );
+  }
 
   // Get or create Prisma client
   const prisma = options.prisma || new PrismaClient();
