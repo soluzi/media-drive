@@ -110,7 +110,18 @@ const PathGenerationSchema = z.object({
 // ==================== Logging ====================
 
 const LoggingSchema = z.object({
-  level: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  enabled: z.boolean().default(false),
+  // Option 1: Keep single level (backward compatible)
+  level: z.enum(["debug", "info", "warn", "error"]).default("info").optional(),
+  // Option 2: Add individual level toggles
+  levels: z
+    .object({
+      debug: z.boolean().default(false),
+      info: z.boolean().default(true),
+      warn: z.boolean().default(true),
+      error: z.boolean().default(true),
+    })
+    .optional(),
 });
 
 // ==================== Media Downloader ====================

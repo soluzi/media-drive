@@ -24,6 +24,14 @@ function loadFromEnv(): Partial<MediaConfig> {
   if (env["MEDIA_LOG_LEVEL"]) {
     config.logging = {
       level: env["MEDIA_LOG_LEVEL"] as "debug" | "info" | "warn" | "error",
+      enabled: true,
+    };
+  }
+
+  if (env["MEDIA_LOG_ENABLED"]) {
+    config.logging = {
+      level: "info",
+      enabled: env["MEDIA_LOG_ENABLED"] === "true",
     };
   }
 
