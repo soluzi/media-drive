@@ -50,8 +50,12 @@ export class FileService {
    */
   async upload(
     ctx: FileUploadContext,
-    conversions: Record<string, ConversionOptions> = {}
+    conversions: Record<string, ConversionOptions> = {},
+    storageDriver?: StorageDriver | undefined
   ): Promise<UploadResult> {
+    // Use provided storage driver or fall back to default
+    const driver = storageDriver || this.storage;
+
     // Detect MIME type
     const mimeType = await detectMimeType(ctx.buffer);
 
@@ -75,7 +79,7 @@ export class FileService {
     });
 
     // Store original file
-    await this.storage.put(pathResult.path, ctx.buffer, {
+    await driver.put(pathResult.path, ctx.buffer, {
       contentType: mimeType,
       visibility: "public",
     });
@@ -108,7 +112,7 @@ export class FileService {
           conversionName
         );
 
-        await this.storage.put(conversionPath.path, result.buffer, {
+        await driver.put(conversionPath.path, result.buffer, {
           contentType: getMimeTypeForFormat(result.format),
           visibility: "public",
         });
@@ -140,15 +144,22 @@ export class FileService {
   /**
    * Delete a file and its conversions
    */
-  async delete(path: string, conversionPaths: string[] = []): Promise<void> {
+  async delete(
+    path: string,
+    conversionPaths: string[] = [],
+    storageDriver?: StorageDriver | undefined
+  ): Promise<void> {
+    // Use provided storage driver or fall back to default
+    const driver = storageDriver || this.storage;
+
     // Delete original
-    await this.storage.delete(path);
+    await driver.delete(path);
     logger.debug(`File deleted: ${path}`);
 
     // Delete conversions
     for (const conversionPath of conversionPaths) {
       try {
-        await this.storage.delete(conversionPath);
+        await driver.delete(conversionPath);
         logger.debug(`Conversion deleted: ${conversionPath}`);
       } catch (error) {
         logger.warn(

@@ -13,16 +13,23 @@ export class UrlService {
   /**
    * Resolve URL for a file
    */
-  async resolveUrl(path: string, signed: boolean = false): Promise<string> {
+  async resolveUrl(
+    path: string,
+    signed: boolean = false,
+    storageDriver?: StorageDriver | undefined
+  ): Promise<string> {
+    // Use provided storage driver or fall back to default
+    const driver = storageDriver || this.storage;
+
     let url: string;
 
     if (signed || this.config.urls.signedDefault) {
-      url = await this.storage.temporaryUrl(
+      url = await driver.temporaryUrl(
         path,
         this.config.urls.temporaryUrlExpiry
       );
     } else {
-      url = this.storage.url(path);
+      url = driver.url(path);
     }
 
     // Add prefix if configured

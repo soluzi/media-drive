@@ -18,10 +18,11 @@ import {
 import { MediaConfig } from "../config/schema";
 import { FileService } from "./file-service";
 import { UrlService } from "./url-service";
-import { NotFoundError } from "../core/errors";
+import { NotFoundError, ConfigurationError } from "../core/errors";
 import { getLogger } from "../core/logger";
 import { Readable } from "stream";
 import { MediaRecord, AttachFileOptions, AttachFromUrlOptions } from "../types";
+import { createStorageDriver } from "../storage/storage-factory";
 
 const logger = getLogger();
 
@@ -31,6 +32,7 @@ const logger = getLogger();
 export class MediaLibrary {
   private fileService: FileService;
   private urlService: UrlService;
+  private storageDriverCache: Map<string, StorageDriver> = new Map();
 
   constructor(
     private config: MediaConfig,
@@ -41,6 +43,9 @@ export class MediaLibrary {
     _conversionProcessor?: ConversionProcessor | undefined,
     private queueDriver?: QueueDriver | undefined
   ) {
+    // Cache the default storage driver
+    this.storageDriverCache.set(config.disk, _storage);
+
     this.fileService = new FileService(
       config,
       _storage,
@@ -49,6 +54,30 @@ export class MediaLibrary {
       _conversionProcessor
     );
     this.urlService = new UrlService(config, _storage);
+  }
+
+  /**
+   * Get storage driver for a specific disk
+   * Caches drivers to avoid recreating them
+   */
+  private getStorageDriver(diskName: string): StorageDriver {
+    // Check cache first
+    const cached = this.storageDriverCache.get(diskName);
+    if (cached) {
+      return cached;
+    }
+
+    // Validate disk exists in configuration
+    const diskConfig = this.config.disks[diskName];
+    if (!diskConfig) {
+      throw new ConfigurationError(`Disk configuration not found: ${diskName}`);
+    }
+
+    // Create and cache the driver
+    const driver = createStorageDriver(diskConfig);
+    this.storageDriverCache.set(diskName, driver);
+
+    return driver;
   }
 
   /**
@@ -71,9 +100,13 @@ export class MediaLibrary {
     logger.info(`Attaching file for ${modelType}:${modelId}`, {
       collection,
       originalName: file.originalname,
+      disk,
     });
 
-    // Upload file
+    // Get the storage driver for the specified disk
+    const storageDriver = this.getStorageDriver(disk);
+
+    // Upload file using the correct storage driver
     const result = await this.fileService.upload(
       {
         modelType,
@@ -82,7 +115,8 @@ export class MediaLibrary {
         originalName: file.originalname,
         buffer: file.buffer,
       },
-      conversions
+      conversions,
+      storageDriver
     );
 
     // Create database record with stored path
@@ -235,8 +269,12 @@ export class MediaLibrary {
       }).path;
     }
 
-    // Delete files
-    await this.fileService.delete(originalPath, conversionPaths);
+    // Get the storage driver for the disk specified in the media record
+    const disk = media.disk || this.config.disk;
+    const storageDriver = this.getStorageDriver(disk);
+
+    // Delete files using the correct storage driver
+    await this.fileService.delete(originalPath, conversionPaths, storageDriver);
 
     // Delete database record
     await this.prisma.media.delete({
@@ -293,7 +331,11 @@ export class MediaLibrary {
       }
     }
 
-    return await this.urlService.resolveUrl(path, signed);
+    // Get the storage driver for the disk specified in the media record
+    const disk = media.disk || this.config.disk;
+    const storageDriver = this.getStorageDriver(disk);
+
+    return await this.urlService.resolveUrl(path, signed, storageDriver);
   }
 
   /**
