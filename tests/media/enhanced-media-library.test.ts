@@ -5,6 +5,8 @@
 import { PrismaClient } from "@prisma/client";
 import { createEnhancedMediaLibrary } from "../../src/factory";
 import { EnhancedMediaLibrary } from "../../src/media/enhanced-media-library";
+import { ConfigurationError } from "../../src/core/errors";
+import { Readable } from "stream";
 
 // Mock Prisma
 const mockPrismaClient = {
@@ -89,6 +91,412 @@ describe("EnhancedMediaLibrary", () => {
 
     it("should have attachFromRequest method", () => {
       expect(typeof mediaLibrary.attachFromRequest).toBe("function");
+    });
+  });
+
+  describe("getStorageDriver (via attachFile)", () => {
+    let mediaLibraryWithMultipleDisks: EnhancedMediaLibrary;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+
+      (mockPrismaClient.media.create as jest.Mock).mockResolvedValue({
+        id: "test-id",
+        path: "User/123/default/test.jpg",
+        model_type: "User",
+        model_id: "123",
+        collection_name: "default",
+        name: "test.jpg",
+        file_name: "test.jpg",
+        mime_type: "image/jpeg",
+        disk: "local",
+        size: 102400,
+        manipulations: {},
+        custom_properties: {},
+        responsive_images: {},
+        order_column: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+      // Create enhanced media library with multiple disks configured
+      mediaLibraryWithMultipleDisks = createEnhancedMediaLibrary({
+        config: {
+          disk: "local",
+          disks: {
+            local: {
+              driver: "local",
+              root: "storage/public",
+              public_base_url: "http://localhost:3000/media",
+            },
+            temp: {
+              driver: "local",
+              root: "storage/temp",
+              public_base_url: "http://localhost:3000/media",
+            },
+          },
+          http: {
+            enabled: true,
+            multipart: {
+              enabled: true,
+              fileField: "file",
+              limits: {
+                fileSize: 5 * 1024 * 1024,
+                files: 5,
+              },
+            },
+          },
+          validation: {
+            fileTypes: {
+              images: ["jpeg", "jpg", "png", "gif"],
+              documents: ["pdf", "doc"],
+              text: ["txt"],
+              audio: [],
+              video: [],
+              archives: [],
+            },
+            contentValidation: true,
+            virusScanning: false,
+            maxFileSize: 5 * 1024 * 1024,
+            customValidators: [],
+          },
+        },
+        prisma: mockPrismaClient,
+      });
+    });
+
+    it("should use specified disk when disk option provided in attachFileWithValidation", async () => {
+      const file: Express.Multer.File = {
+        fieldname: "file",
+        originalname: "test.jpg",
+        encoding: "7bit",
+        mimetype: "image/jpeg",
+        buffer: Buffer.from("test image data"),
+        size: 15,
+        destination: "",
+        filename: "",
+        path: "",
+        stream: null as unknown as Readable,
+      };
+
+      (mockPrismaClient.media.create as jest.Mock).mockResolvedValue({
+        id: "test-id",
+        path: "User/123/default/test.jpg",
+        model_type: "User",
+        model_id: "123",
+        collection_name: "default",
+        name: "test.jpg",
+        file_name: "test.jpg",
+        mime_type: "image/jpeg",
+        disk: "temp",
+        size: 15,
+        manipulations: {},
+        custom_properties: {},
+        responsive_images: {},
+        order_column: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+      const result =
+        await mediaLibraryWithMultipleDisks.attachFileWithValidation(
+          "User",
+          "123",
+          file,
+          {
+            modelType: "User",
+            modelId: "123",
+            disk: "temp",
+          }
+        );
+
+      expect(result.media.disk).toBe("temp");
+      expect(result.media.model_type).toBe("User");
+      expect(result.media.model_id).toBe("123");
+    });
+
+    it("should use default disk when disk not specified", async () => {
+      const file: Express.Multer.File = {
+        fieldname: "file",
+        originalname: "test.jpg",
+        encoding: "7bit",
+        mimetype: "image/jpeg",
+        buffer: Buffer.from("test image data"),
+        size: 15,
+        destination: "",
+        filename: "",
+        path: "",
+        stream: null as unknown as Readable,
+      };
+
+      const result =
+        await mediaLibraryWithMultipleDisks.attachFileWithValidation(
+          "User",
+          "123",
+          file
+        );
+
+      expect(result.media.disk).toBe("local");
+    });
+
+    it("should throw ConfigurationError for invalid disk", async () => {
+      const file: Express.Multer.File = {
+        fieldname: "file",
+        originalname: "test.jpg",
+        encoding: "7bit",
+        mimetype: "image/jpeg",
+        buffer: Buffer.from("test"),
+        size: 4,
+        destination: "",
+        filename: "",
+        path: "",
+        stream: null as unknown as Readable,
+      };
+
+      await expect(
+        mediaLibraryWithMultipleDisks.attachFileWithValidation(
+          "User",
+          "123",
+          file,
+          {
+            modelType: "User",
+            modelId: "123",
+            disk: "invalid-disk",
+          }
+        )
+      ).rejects.toThrow(ConfigurationError);
+
+      await expect(
+        mediaLibraryWithMultipleDisks.attachFileWithValidation(
+          "User",
+          "123",
+          file,
+          {
+            modelType: "User",
+            modelId: "123",
+            disk: "invalid-disk",
+          }
+        )
+      ).rejects.toThrow("Disk configuration not found: invalid-disk");
+    });
+
+    it("should cache storage drivers for same disk", async () => {
+      const file: Express.Multer.File = {
+        fieldname: "file",
+        originalname: "test.jpg",
+        encoding: "7bit",
+        mimetype: "image/jpeg",
+        buffer: Buffer.from("test"),
+        size: 4,
+        destination: "",
+        filename: "",
+        path: "",
+        stream: null as unknown as Readable,
+      };
+
+      (mockPrismaClient.media.create as jest.Mock)
+        .mockResolvedValueOnce({
+          id: "test-id-1",
+          path: "User/123/default/test.jpg",
+          model_type: "User",
+          model_id: "123",
+          collection_name: "default",
+          name: "test.jpg",
+          file_name: "test.jpg",
+          mime_type: "image/jpeg",
+          disk: "temp",
+          size: 4,
+          manipulations: {},
+          custom_properties: {},
+          responsive_images: {},
+          order_column: null,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .mockResolvedValueOnce({
+          id: "test-id-2",
+          path: "User/456/default/test.jpg",
+          model_type: "User",
+          model_id: "456",
+          collection_name: "default",
+          name: "test.jpg",
+          file_name: "test.jpg",
+          mime_type: "image/jpeg",
+          disk: "temp",
+          size: 4,
+          manipulations: {},
+          custom_properties: {},
+          responsive_images: {},
+          order_column: null,
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+
+      // First call should create and cache the driver
+      const result1 =
+        await mediaLibraryWithMultipleDisks.attachFileWithValidation(
+          "User",
+          "123",
+          file,
+          {
+            modelType: "User",
+            modelId: "123",
+            disk: "temp",
+          }
+        );
+
+      // Second call should use cached driver
+      const result2 =
+        await mediaLibraryWithMultipleDisks.attachFileWithValidation(
+          "User",
+          "456",
+          file,
+          {
+            modelType: "User",
+            modelId: "456",
+            disk: "temp",
+          }
+        );
+
+      expect(result1.media.disk).toBe("temp");
+      expect(result2.media.disk).toBe("temp");
+      // Both should succeed without errors (caching works)
+    });
+
+    it("should use different drivers for different disks", async () => {
+      const file: Express.Multer.File = {
+        fieldname: "file",
+        originalname: "test.jpg",
+        encoding: "7bit",
+        mimetype: "image/jpeg",
+        buffer: Buffer.from("test"),
+        size: 4,
+        destination: "",
+        filename: "",
+        path: "",
+        stream: null as unknown as Readable,
+      };
+
+      (mockPrismaClient.media.create as jest.Mock)
+        .mockResolvedValueOnce({
+          id: "test-id-1",
+          path: "User/123/default/test.jpg",
+          model_type: "User",
+          model_id: "123",
+          collection_name: "default",
+          name: "test.jpg",
+          file_name: "test.jpg",
+          mime_type: "image/jpeg",
+          disk: "local",
+          size: 4,
+          manipulations: {},
+          custom_properties: {},
+          responsive_images: {},
+          order_column: null,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .mockResolvedValueOnce({
+          id: "test-id-2",
+          path: "User/456/default/test.jpg",
+          model_type: "User",
+          model_id: "456",
+          collection_name: "default",
+          name: "test.jpg",
+          file_name: "test.jpg",
+          mime_type: "image/jpeg",
+          disk: "temp",
+          size: 4,
+          manipulations: {},
+          custom_properties: {},
+          responsive_images: {},
+          order_column: null,
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+
+      const localResult =
+        await mediaLibraryWithMultipleDisks.attachFileWithValidation(
+          "User",
+          "123",
+          file,
+          {
+            modelType: "User",
+            modelId: "123",
+            disk: "local",
+          }
+        );
+
+      const tempResult =
+        await mediaLibraryWithMultipleDisks.attachFileWithValidation(
+          "User",
+          "456",
+          file,
+          {
+            modelType: "User",
+            modelId: "456",
+            disk: "temp",
+          }
+        );
+
+      expect(localResult.media.disk).toBe("local");
+      expect(tempResult.media.disk).toBe("temp");
+      expect(localResult.media.disk).not.toBe(tempResult.media.disk);
+    });
+
+    it("should save disk field correctly in database record", async () => {
+      const file: Express.Multer.File = {
+        fieldname: "file",
+        originalname: "test.jpg",
+        encoding: "7bit",
+        mimetype: "image/jpeg",
+        buffer: Buffer.from("test"),
+        size: 4,
+        destination: "",
+        filename: "",
+        path: "",
+        stream: null as unknown as Readable,
+      };
+
+      (mockPrismaClient.media.create as jest.Mock).mockResolvedValue({
+        id: "test-id",
+        path: "User/123/default/test.jpg",
+        model_type: "User",
+        model_id: "123",
+        collection_name: "default",
+        name: "test.jpg",
+        file_name: "test.jpg",
+        mime_type: "image/jpeg",
+        disk: "temp",
+        size: 4,
+        manipulations: {},
+        custom_properties: {},
+        responsive_images: {},
+        order_column: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+
+      const result =
+        await mediaLibraryWithMultipleDisks.attachFileWithValidation(
+          "User",
+          "123",
+          file,
+          {
+            modelType: "User",
+            modelId: "123",
+            disk: "temp",
+          }
+        );
+
+      // Verify the disk was saved in the database record
+      expect(mockPrismaClient.media.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          disk: "temp",
+        }),
+      });
+
+      expect(result.media.disk).toBe("temp");
     });
   });
 
