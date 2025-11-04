@@ -47,7 +47,7 @@ A new `path` field has been added to the Media model:
 ```prisma
 model Media {
   id                String   @id @default(cuid())
-  path              String   // ← NEW: Stores generated file path
+  path              String?  // ← NEW: Stores generated file path (optional for backward compatibility)
   model_type        String
   model_id          String
   collection_name   String   @default("default")
@@ -130,8 +130,8 @@ npx prisma migrate deploy
 Use the built-in migration utility:
 
 ```typescript
-import { migrateMediaPaths, checkMigrationStatus } from "media-drive/migration";
-import { DefaultPathGenerator } from "media-drive/strategies";
+import { migrateMediaPaths, checkMigrationStatus } from "media-drive";
+import { DefaultPathGenerator } from "media-drive";
 
 // 1. Check status
 const status = await checkMigrationStatus(prisma);
@@ -211,7 +211,7 @@ The only change is **internal**: paths are now stored instead of regenerated.
 ### 1. **UUID-Based Paths (SimplePathGenerator)**
 
 ```typescript
-import { SimplePathGenerator } from "media-drive/strategies";
+import { createMediaLibrary } from "media-drive";
 
 const service = createMediaLibrary({
   config: {
@@ -229,7 +229,7 @@ const service = createMediaLibrary({
 ### 2. **Custom Non-Deterministic Generators**
 
 ```typescript
-import { PathGenerator } from "media-drive/core";
+import { PathGenerator } from "media-drive";
 
 class HashBasedPathGenerator implements PathGenerator {
   generate(ctx) {
@@ -247,6 +247,8 @@ class HashBasedPathGenerator implements PathGenerator {
 }
 
 // Now works with v3! (failed in v2)
+import { createMediaLibrary } from "media-drive";
+
 const service = createMediaLibrary({
   providers: {
     pathGenerator: new HashBasedPathGenerator(),
@@ -337,15 +339,19 @@ Checks how many records need migration.
 
 ## 🛠️ CLI Tools
 
+> **Note:** CLI migration commands are not yet implemented. Use the migration utilities programmatically (see Step 4 above).
+
+The CLI currently provides:
+
 ```bash
-# Check migration status
-npx media-drive migrate:check
+# Print Prisma schema and migration instructions
+npx media-drive migrate
 
-# Run migration (interactive)
-npx media-drive migrate:run
+# Check environment and dependencies
+npx media-drive doctor
 
-# Run migration (non-interactive)
-npx media-drive migrate:run --strategy default --batch-size 100
+# Generate configuration file
+npx media-drive init
 ```
 
 ---
@@ -357,6 +363,12 @@ npx media-drive migrate:run --strategy default --batch-size 100
 **CRITICAL:** Use the **same path generator** during migration that your app uses:
 
 ```typescript
+import {
+  createMediaLibrary,
+  DefaultPathGenerator,
+  migrateMediaPaths,
+} from "media-drive";
+
 // ✅ Correct: Using DefaultPathGenerator
 const service = createMediaLibrary({
   config: {
@@ -369,6 +381,12 @@ await migrateMediaPaths(prisma, new DefaultPathGenerator());
 ```
 
 ```typescript
+import {
+  createMediaLibrary,
+  DefaultPathGenerator,
+  migrateMediaPaths,
+} from "media-drive";
+
 // ❌ Wrong: Mismatch will create incorrect paths!
 const service = createMediaLibrary({
   config: {
@@ -387,6 +405,12 @@ If switching from deterministic to non-deterministic:
 **Option 1: Migrate first, then switch**
 
 ```typescript
+import {
+  migrateMediaPaths,
+  DefaultPathGenerator,
+  createMediaLibrary,
+} from "media-drive";
+
 // 1. Migrate with old generator
 await migrateMediaPaths(prisma, new DefaultPathGenerator());
 
@@ -404,6 +428,8 @@ const service = createMediaLibrary({
 **Option 2: Accept mixed paths**
 
 ```typescript
+import { createMediaLibrary } from "media-drive";
+
 // Just switch - old records use fallback
 const service = createMediaLibrary({
   config: {

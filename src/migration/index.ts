@@ -49,8 +49,7 @@ export interface MigrationResult {
  *
  * @example
  * ```typescript
- * import { migrateMediaPaths } from "media-drive/migration";
- * import { DefaultPathGenerator } from "media-drive/strategies";
+ * import { migrateMediaPaths, DefaultPathGenerator } from "media-drive";
  *
  * const result = await migrateMediaPaths(
  *   prisma,
