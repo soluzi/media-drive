@@ -5,6 +5,50 @@ All notable changes to Media Drive will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2025-11-04
+
+### ✨ Added
+
+#### **Enhanced Logging System**
+
+- **Configurable Logging** - Enable/disable logging via `logging.enabled` flag
+- **Environment Variable Support** - `MEDIA_LOG_ENABLED` and `MEDIA_LOG_LEVEL` environment variables
+- **Multiple Logger Implementations**
+  - `ConsoleLogger` - Standard level-based filtering (debug < info < warn < error)
+  - `SelectiveConsoleLogger` - Per-level enable/disable granular control
+  - `NoOpLogger` - Silent logger for when logging is disabled
+- **Enhanced Logger Factory** - `createLogger()` supports level hierarchy or per-level toggles
+- **Comprehensive JSDoc Documentation** - Full type annotations and usage examples (236 lines added)
+
+#### **Multi-Disk Storage Support**
+
+- **Storage Driver Caching** - MediaLibrary caches storage drivers per disk for performance
+- **Dynamic Disk Selection** - FileService methods accept optional `storageDriver` parameter
+- **Enhanced Storage Factory** - Improved disk configuration handling and driver creation
+- **Multi-Disk Operations** - Upload and delete operations can target specific disks
+
+### 🔄 Changed
+
+- **Logger configuration**: Enhanced with `enabled` flag and optional per-level toggles (`levels` object)
+- **Logger factory**: Updated `createLogger()` to accept `enabled` flag and optional `levels` configuration
+- **Factory functions**: Both `createMediaLibrary()` and `createEnhancedMediaLibrary()` now respect logging configuration
+- **FileService**: Added optional `storageDriver` parameter to `upload()` and `delete()` methods for multi-disk operations
+- **MediaLibrary**: Added storage driver caching and `getStorageDriver()` method for multi-disk support
+- **Storage factory**: Enhanced with improved disk configuration handling (67 lines changed)
+
+### 🔧 Fixed
+
+- Fixed migration utility import paths in documentation and JSDoc examples (changed from `media-drive/migration` and `media-drive/strategies` to `media-drive`)
+- Updated V3 migration guide with correct import paths and CLI command documentation
+
+### 📦 Backward Compatibility
+
+- ✅ **100% backward compatible with v3.0.0**
+- All new features are opt-in via configuration
+- Existing code continues to work without changes
+
+---
+
 ## [3.0.0] - 2025-10-12
 
 ### 🎉 Major Release - Enhanced Features

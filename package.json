@@ -1,6 +1,6 @@
 {
   "name": "media-drive",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Modular TypeScript media library for Node.js with Prisma ORM. Extensible storage drivers (local, S3, BunnyCDN), image conversions via Sharp, async job processing with BullMQ, built-in multipart parsing, file validation, and flexible configuration. Inspired by Laravel Media Library.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
