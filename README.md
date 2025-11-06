@@ -1,4 +1,4 @@
-# Media Drive v3.0.0
+# Media Drive v3.1.0
 
 > Modular, TypeScript-first media library for Node.js applications  
 > Inspired by Laravel Media Library
@@ -6,27 +6,27 @@
 [![npm version](https://badge.fury.io/js/media-drive.svg)](https://badge.fury.io/js/media-drive)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## ⚠️ Upgrading from v2.x?
+## Upgrading from v2.x?
 
 See the **[V3 Migration & Feature Guide](./versions/V3_MIGRATION_GUIDE.md)** for a comprehensive upgrade guide. v3.0 introduces **stored file paths** to support non-deterministic path generators.
 
 Quick links:
 
-- 📚 [Full V3 Feature Guide](./versions/V3_MIGRATION_GUIDE.md) - Complete overview with examples
-- 🔄 [V2 Migration Guide](./versions/V2_MIGRATION_GUIDE.md) - If upgrading from v1
+- [Full V3 Feature Guide](./versions/V3_MIGRATION_GUIDE.md) - Complete overview with examples
+- [V2 Migration Guide](./versions/V2_MIGRATION_GUIDE.md) - If upgrading from v1
 
-## ✨ Features
+## Features
 
-- 📦 **Modular Architecture** - Plug in your own storage drivers, processors, or queues
-- 🔧 **Type-Safe Configuration** - Zod-validated config with TypeScript inference
-- 💾 **Multiple Storage Drivers** - Local, S3, BunnyCDN built-in
-- 🎨 **Image Processing** - Sharp-powered conversions with async job support
-- ⚡ **Async Job Processing** - BullMQ integration for background tasks
-- 🔒 **Security** - MIME type validation, file size limits, signed URLs
-- 🛠️ **CLI Tools** - Generate configs, run diagnostics, manage migrations
-- 🎯 **Non-Breaking API** - Backward compatible with v1
+- **Modular Architecture** - Plug in your own storage drivers, processors, or queues
+- **Type-Safe Configuration** - Zod-validated config with TypeScript inference
+- **Multiple Storage Drivers** - Local, S3, BunnyCDN built-in
+- **Image Processing** - Sharp-powered conversions with async job support
+- **Async Job Processing** - BullMQ integration for background tasks
+- **Security** - MIME type validation, file size limits, signed URLs
+- **CLI Tools** - Generate configs, run diagnostics, manage migrations
+- **Non-Breaking API** - Backward compatible with v1
 
-## 📦 Installation
+## Installation
 
 ```bash
 npm install media-drive
@@ -38,9 +38,9 @@ npm install media-drive
 npm install @prisma/client prisma
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
-> 💡 **New to v3?** We offer two setups: **Standard** (use with multer) and **Enhanced** (built-in multipart + validation). See [Choosing Your Setup](./docs/choosing-your-setup.md) to decide.
+> **New to v3?** We offer two setups: **Standard** (use with multer) and **Enhanced** (built-in multipart + validation). See [Choosing Your Setup](./docs/choosing-your-setup.md) to decide.
 
 ### 1. Initialize
 
@@ -118,9 +118,9 @@ app.post(
 );
 ```
 
-> 📖 **Which one?** See [Choosing Your Setup](./docs/choosing-your-setup.md)
+> **Which one?** See [Choosing Your Setup](./docs/choosing-your-setup.md)
 
-## 📖 Documentation
+## Documentation
 
 - **[Choosing Your Setup](./docs/choosing-your-setup.md)** - Standard vs Enhanced: Which to use?
 - **[Getting Started](./docs/getting-started.md)** - Installation and basic usage
@@ -132,7 +132,7 @@ app.post(
 - **[Troubleshooting](./docs/troubleshooting.md)** - Common issues and solutions
 - **[Architecture](./ARCHITECTURE.md)** - System design and patterns
 
-## 🏗️ Architecture
+## Architecture
 
 Media Drive v3 features a clean, modular architecture:
 
@@ -154,7 +154,7 @@ src/
   cli/            # Command-line tools
 ```
 
-## 🔌 Extensibility
+## Extensibility
 
 Easily swap or extend any component:
 
@@ -173,7 +173,7 @@ const mediaLibrary = createMediaLibrary({
 
 See [Advanced Usage](./docs/advanced.md) for creating custom drivers.
 
-## 🧪 Testing
+## Testing
 
 ```bash
 npm test                  # Run all tests
@@ -182,11 +182,11 @@ npm run test:coverage     # With coverage report
 
 **Test Results:**
 
-- ✅ 59 tests passing
-- ✅ 7 test suites
-- ✅ 100% pass rate
+- 59 tests passing
+- 7 test suites
+- 100% pass rate
 
-## 📝 Migration from v1
+## Migration from v1
 
 Media Drive v3 maintains backward compatibility:
 
@@ -205,7 +205,7 @@ const service = createMediaLibrary({ config, prisma });
 
 All public methods (`attachFile`, `attachFromUrl`, `list`, `remove`, `resolveFileUrl`, etc.) remain unchanged.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please:
 
@@ -217,17 +217,17 @@ Contributions are welcome! Please:
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for architecture details.
 
-## 📄 License
+## License
 
 MIT © [Dadda Abdelghafour](https://github.com/soluzi)
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Inspired by [Laravel Media Library](https://github.com/spatie/laravel-medialibrary) by Spatie.
 
 ---
 
-## 📊 Stats
+## Stats
 
 - **59 tests passing** - 100% test coverage for core modules
 - **6 Cursor Rules** - AI-friendly codebase documentation
