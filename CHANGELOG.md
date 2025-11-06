@@ -5,6 +5,183 @@ All notable changes to Media Drive will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2025-11-07
+
+### ✨ Added
+
+#### **HTTP Response Helpers**
+
+- **Standardized API Response Format** - New consistent response structure for all API endpoints
+  - Success responses: `{ success: true, data: T, message?: string, pagination?: PageMeta }`
+  - Error responses: `{ success: false, message: string, code?: string }`
+- **Response Helper Functions** - Utility functions for common HTTP status codes
+  - Success: `ok()`, `created()`, `createdWithMessage()`, `accepted()`, `noContent()`, `okWithMessage()`, `okPaginated()`
+  - Client errors: `badRequest()`, `unauthorized()`, `forbidden()`, `notFound()`, `conflict()`, `unprocessableEntity()`, `tooManyRequests()`
+  - Server errors: `internalError()`, `notImplemented()`, `serviceUnavailable()`
+  - Convenience helpers: `noFile()`, `missingParameters()`, `missingId()`, `fileTooLarge()`, `tooManyFiles()`, `invalidFileType()`, `validationError()`, `uploadError()`
+- **Response Keys Module** - Centralized response message keys for consistency
+- **Pagination Helpers** - `buildPageMeta()` and `okPaginated()` for standardized pagination responses
+
+#### **Enhanced API Router**
+
+- **Optional Storage Drivers** - `ApiRouterConfig` now accepts `storageDrivers` map for pre-initialized drivers
+  - Allows passing pre-configured storage drivers by disk name for improved performance
+  - Enables dynamic storage driver selection based on media record's disk property
+- **Public Storage Driver Access** - `getStorageDriver()` method added to `ApiRouter` class
+  - Retrieves storage driver for a specific disk name
+  - Uses pre-initialized drivers if available, falls back to `MediaLibrary.getStorageDriver()`
+  - Enables updating storage driver root dynamically based on media record's disk
+- **Public Storage Driver Access in MediaLibrary** - `getStorageDriver()` method visibility changed from private to public in `MediaLibrary`
+
+### 🔄 Changed
+
+- **API Response Format** - All API endpoints now use standardized response format
+  - Error responses changed from `{ error: string, code: string }` to `{ success: false, message: string, code?: string }`
+  - Upload endpoint now wraps response: `{ media: ..., validation: ... }` instead of flat structure
+  - Delete endpoint now includes `data: {}` field in response
+  - All responses now consistently include `success` boolean field
+- **Error Handling** - Standardized error responses across all endpoints
+- **Documentation** - Enhanced JSDoc comments throughout codebase (2751 lines added)
+
+### 🚨 Breaking Changes
+
+#### **API Response Format Changes**
+
+**Error Responses:**
+
+```typescript
+// ❌ Old format (v3.1.0)
+{
+  error: "Media not found",
+  code: "NOT_FOUND"
+}
+
+// ✅ New format (v3.2.0)
+{
+  success: false,
+  message: "Media not found",
+  code: "NOT_FOUND"
+}
+```
+
+**Upload Response:**
+
+```typescript
+// ❌ Old format (v3.1.0)
+{
+  success: true,
+  data: result.media,
+  validation: result.validation,
+  message: "File uploaded successfully"
+}
+
+// ✅ New format (v3.2.0)
+{
+  success: true,
+  data: {
+    media: result.media,
+    validation: result.validation
+  },
+  message: "File uploaded successfully"
+}
+```
+
+**Delete Response:**
+
+```typescript
+// ❌ Old format (v3.1.0)
+{
+  success: true,
+  message: "Media deleted successfully"
+}
+
+// ✅ New format (v3.2.0)
+{
+  success: true,
+  data: {},
+  message: "Media deleted successfully"
+}
+```
+
+### 🔧 Fixed
+
+- Standardized error handling across all API endpoints
+- Improved response consistency and type safety
+
+### 📦 Migration Guide
+
+**For API Consumers:**
+
+If you're consuming the HTTP API endpoints, update your response parsing:
+
+1. **Error handling**: Change `error` field to `message` and check `success === false`
+2. **Upload responses**: Access `data.media` and `data.validation` instead of flat structure
+3. **Delete responses**: Response now includes `data: {}` field
+
+**Example Migration:**
+
+```typescript
+// ❌ Old code
+const response = await fetch('/api/media/upload', ...);
+const json = await response.json();
+if (json.error) {
+  console.error(json.error);
+} else {
+  const media = json.data; // Direct access
+}
+
+// ✅ New code
+const response = await fetch('/api/media/upload', ...);
+const json = await response.json();
+if (!json.success) {
+  console.error(json.message);
+} else {
+  const media = json.data.media; // Nested access
+}
+```
+
+**Using Pre-initialized Storage Drivers:**
+
+```typescript
+import { createEnhancedMediaLibrary, createApiRouter } from "media-drive";
+import { LocalStorageDriver, S3StorageDriver } from "media-drive/storage";
+
+// Create storage drivers with custom configurations
+const localDriver = new LocalStorageDriver({ root: "/custom/uploads" });
+const s3Driver = new S3StorageDriver({
+  bucket: "my-bucket",
+  region: "us-east-1",
+});
+
+// Pre-initialize drivers map
+const storageDrivers = new Map([
+  ["local", localDriver],
+  ["s3", s3Driver],
+]);
+
+// Create API router with pre-initialized drivers
+const mediaLibrary = createEnhancedMediaLibrary({ prisma });
+const apiRouter = createApiRouter(mediaLibrary, {
+  storageDrivers, // Pass pre-initialized drivers
+});
+
+// Get storage driver dynamically based on media record's disk
+const media = await prisma.media.findUnique({ where: { id: mediaId } });
+if (media) {
+  const driver = apiRouter.getStorageDriver(media.disk);
+  // Use driver to update root or perform operations
+  // Driver root can be updated dynamically based on media record
+}
+```
+
+### 📦 Backward Compatibility
+
+- ⚠️ **Breaking changes for HTTP API consumers** - Response format changed
+- ✅ **Backward compatible for programmatic API** - `MediaLibrary` and `EnhancedMediaLibrary` methods unchanged
+- ✅ **No database migrations required**
+
+---
+
 ## [3.1.0] - 2025-11-04
 
 ### ✨ Added
