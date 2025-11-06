@@ -7,6 +7,13 @@
 
 import { Request, Response, NextFunction } from "express";
 import multer from "multer";
+import {
+  fileTooLarge,
+  tooManyFiles,
+  unexpectedFileField,
+  uploadError,
+  invalidFileType,
+} from "../core/responders/http";
 
 /**
  * Configuration for multipart middleware.
@@ -321,46 +328,36 @@ export class MultipartMiddleware {
       if (err instanceof multer.MulterError) {
         switch (err.code) {
           case "LIMIT_FILE_SIZE":
-            res.status(400).json({
-              error: "File too large",
-              message: `File size exceeds ${
+            fileTooLarge(
+              res,
+              `File size exceeds ${
                 this.config.limits?.fileSize || 10485760
               } bytes`,
-              code: "FILE_TOO_LARGE",
-            });
+              this.config.limits?.fileSize
+            );
             return;
           case "LIMIT_FILE_COUNT":
-            res.status(400).json({
-              error: "Too many files",
-              message: `Maximum ${
-                this.config.limits?.files || 5
-              } files allowed`,
-              code: "TOO_MANY_FILES",
-            });
+            tooManyFiles(
+              res,
+              `Maximum ${this.config.limits?.files || 5} files allowed`,
+              this.config.limits?.files
+            );
             return;
           case "LIMIT_UNEXPECTED_FILE":
-            res.status(400).json({
-              error: "Unexpected file field",
-              message: `Field name '${err.field}' is not allowed`,
-              code: "UNEXPECTED_FILE_FIELD",
-            });
+            unexpectedFileField(
+              res,
+              `Field name '${err.field}' is not allowed`,
+              err.field
+            );
             return;
           default:
-            res.status(400).json({
-              error: "Upload error",
-              message: err.message,
-              code: "UPLOAD_ERROR",
-            });
+            uploadError(res, err.message);
             return;
         }
       }
 
       if (err.message && err.message.includes("File type")) {
-        res.status(400).json({
-          error: "Invalid file type",
-          message: err.message,
-          code: "INVALID_FILE_TYPE",
-        });
+        invalidFileType(res, err.message);
         return;
       }
 

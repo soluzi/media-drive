@@ -9,6 +9,18 @@ import { Router, Request, Response, NextFunction } from "express";
 import { EnhancedMediaLibrary } from "../media/enhanced-media-library";
 import { NotFoundError } from "../core/errors";
 import { StorageDriver } from "../core/contracts";
+import {
+  noFile,
+  missingParameters,
+  createdWithMessage,
+  missingId,
+  okWithMessage,
+  notFound,
+  ok,
+  validationError,
+  uploadError,
+  internalError,
+} from "../core/responders/http";
 
 /**
  * Configuration for the API router.
@@ -152,24 +164,16 @@ export class ApiRouter {
     req: Request,
     res: Response,
     next: NextFunction
-  ): Promise<void> {
+  ): Promise<void | Response> {
     try {
       if (!req.file) {
-        res.status(400).json({
-          error: "No file uploaded",
-          code: "NO_FILE",
-        });
-        return;
+        return noFile(res);
       }
 
       const { modelType, modelId, collection, name, disk } = req.body;
 
       if (!modelType || !modelId) {
-        res.status(400).json({
-          error: "Missing required parameters: modelType, modelId",
-          code: "MISSING_PARAMETERS",
-        });
-        return;
+        return missingParameters(res, undefined, "modelType, modelId");
       }
 
       const result = await this.mediaLibrary.attachFileWithValidation(
@@ -186,12 +190,14 @@ export class ApiRouter {
         }
       );
 
-      res.status(201).json({
-        success: true,
-        data: result.media,
-        validation: result.validation,
-        message: "File uploaded successfully",
-      });
+      return createdWithMessage(
+        res,
+        {
+          media: result.media,
+          validation: result.validation,
+        },
+        "File uploaded successfully"
+      );
     } catch (error) {
       next(error);
     }
@@ -209,17 +215,13 @@ export class ApiRouter {
     req: Request,
     res: Response,
     next: NextFunction
-  ): Promise<void> {
+  ): Promise<void | Response> {
     try {
       const { id } = req.params;
       const { conversion, signed } = req.query;
 
       if (!id) {
-        res.status(400).json({
-          error: "Missing media ID",
-          code: "MISSING_ID",
-        });
-        return;
+        return missingId(res);
       }
 
       const url = await this.mediaLibrary.resolveFileUrl(
@@ -229,14 +231,10 @@ export class ApiRouter {
       );
 
       // Redirect to file URL
-      res.redirect(url);
+      return res.redirect(url);
     } catch (error) {
       if (error instanceof NotFoundError) {
-        res.status(404).json({
-          error: "Media not found",
-          code: "NOT_FOUND",
-        });
-        return;
+        return notFound(res);
       }
       next(error);
     }
@@ -254,31 +252,20 @@ export class ApiRouter {
     req: Request,
     res: Response,
     next: NextFunction
-  ): Promise<void> {
+  ): Promise<void | Response> {
     try {
       const { id } = req.params;
 
       if (!id) {
-        res.status(400).json({
-          error: "Missing media ID",
-          code: "MISSING_ID",
-        });
-        return;
+        return missingId(res);
       }
 
       await this.mediaLibrary.remove(id);
 
-      res.json({
-        success: true,
-        message: "Media deleted successfully",
-      });
+      return okWithMessage(res, {}, "Media deleted successfully");
     } catch (error) {
       if (error instanceof NotFoundError) {
-        res.status(404).json({
-          error: "Media not found",
-          code: "NOT_FOUND",
-        });
-        return;
+        return notFound(res);
       }
       next(error);
     }
@@ -296,7 +283,7 @@ export class ApiRouter {
     req: Request,
     res: Response,
     next: NextFunction
-  ): Promise<void> {
+  ): Promise<void | Response> {
     try {
       const {
         modelType,
@@ -307,11 +294,7 @@ export class ApiRouter {
       } = req.query;
 
       if (!modelType || !modelId) {
-        res.status(400).json({
-          error: "Missing required parameters: modelType, modelId",
-          code: "MISSING_PARAMETERS",
-        });
-        return;
+        return missingParameters(res, undefined, "modelType, modelId");
       }
 
       const mediaList = await this.mediaLibrary.list(
@@ -327,8 +310,7 @@ export class ApiRouter {
       const endIndex = startIndex + limitNum;
       const paginatedMedia = mediaList.slice(startIndex, endIndex);
 
-      res.json({
-        success: true,
+      return ok(res, {
         data: paginatedMedia,
         pagination: {
           page: pageNum,
@@ -354,37 +336,26 @@ export class ApiRouter {
     req: Request,
     res: Response,
     next: NextFunction
-  ): Promise<void> {
+  ): Promise<void | Response> {
     try {
       const { id } = req.params;
 
       if (!id) {
-        res.status(400).json({
-          error: "Missing media ID",
-          code: "MISSING_ID",
-        });
-        return;
+        return missingId(res);
       }
 
       // Get media info (this would need to be implemented in MediaLibrary)
       // For now, just return basic info
       const url = await this.mediaLibrary.resolveFileUrl(id);
 
-      res.json({
-        success: true,
-        data: {
-          id,
-          url,
-          // Additional media info would go here
-        },
+      return ok(res, {
+        id,
+        url,
+        // Additional media info would go here
       });
     } catch (error) {
       if (error instanceof NotFoundError) {
-        res.status(404).json({
-          error: "Media not found",
-          code: "NOT_FOUND",
-        });
-        return;
+        return notFound(res);
       }
       next(error);
     }
@@ -419,37 +390,23 @@ export class ApiRouter {
     _req: Request,
     res: Response,
     _next: NextFunction
-  ): void {
+  ): void | Response {
     console.error("API Error:", error);
-
-    // Default error response
-    let status = 500;
-    let message = "Internal server error";
-    let code = "INTERNAL_ERROR";
 
     // Handle specific error types
     if (error.name === "ValidationError") {
-      status = 400;
-      message = error.message;
-      code = "VALIDATION_ERROR";
+      return validationError(res, error.message);
     } else if (error.name === "MulterError") {
-      status = 400;
-      message = error.message;
-      code = "UPLOAD_ERROR";
+      return uploadError(res, error.message);
     } else if (
       error.message &&
       error.message.includes("File validation failed")
     ) {
-      status = 400;
-      message = error.message;
-      code = "VALIDATION_ERROR";
+      return validationError(res, error.message);
     }
 
-    res.status(status).json({
-      error: message,
-      code,
-      timestamp: new Date().toISOString(),
-    });
+    // Default error response
+    return internalError(res, error.message);
   }
 
   /**

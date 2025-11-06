@@ -30,6 +30,11 @@ import {
   PathGenerator,
   FileNamer,
 } from "../core/contracts";
+import {
+  noFile,
+  missingParameters,
+  createdWithMessage,
+} from "../core/responders/http";
 
 /**
  * Enhanced media library configuration.
@@ -381,25 +386,17 @@ export class EnhancedMediaLibrary extends MediaLibrary {
       req: MultipartRequest,
       res: Response,
       next: NextFunction
-    ): Promise<void> => {
+    ): Promise<void | Response> => {
       try {
         if (!req.file) {
-          res.status(400).json({
-            error: "No file uploaded",
-            code: "NO_FILE",
-          });
-          return;
+          return noFile(res);
         }
 
         // Extract upload parameters from request
         const { modelType, modelId, collection, name, disk } = req.body;
 
         if (!modelType || !modelId) {
-          res.status(400).json({
-            error: "Missing required parameters: modelType, modelId",
-            code: "MISSING_PARAMETERS",
-          });
-          return;
+          return missingParameters(res, undefined, "modelType, modelId");
         }
 
         // Upload file with validation
@@ -418,12 +415,14 @@ export class EnhancedMediaLibrary extends MediaLibrary {
         );
 
         // Return success response
-        res.status(201).json({
-          success: true,
-          media: result.media,
-          validation: result.validation,
-          message: "File uploaded successfully",
-        });
+        return createdWithMessage(
+          res,
+          {
+            media: result.media,
+            validation: result.validation,
+          },
+          "File uploaded successfully"
+        );
       } catch (error) {
         next(error);
       }
