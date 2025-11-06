@@ -1,14 +1,17 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { EnhancedMediaLibrary } from "../media/enhanced-media-library";
 import { NotFoundError } from "../core/errors";
+import { StorageDriver } from "../core/contracts";
 
 export interface ApiRouterConfig {
   basePath: string;
-  authentication?: boolean;
-  rateLimiting?: {
-    uploads: string;
-    downloads: string;
-  };
+  authentication?: boolean | undefined;
+  rateLimiting?:
+    | {
+        uploads: string;
+        downloads: string;
+      }
+    | undefined;
   endpoints: {
     upload: string;
     download: string;
@@ -16,7 +19,8 @@ export interface ApiRouterConfig {
     list: string;
     info: string;
   };
-  cors?: boolean;
+  cors?: boolean | undefined;
+  storageDrivers?: Map<string, StorageDriver> | undefined;
 }
 
 export interface ApiRequest extends Request {
@@ -27,6 +31,7 @@ export class ApiRouter {
   private mediaLibrary: EnhancedMediaLibrary;
   private config: ApiRouterConfig;
   private router: Router;
+  private storageDrivers?: Map<string, StorageDriver> | undefined;
 
   constructor(mediaLibrary: EnhancedMediaLibrary, config: ApiRouterConfig) {
     this.mediaLibrary = mediaLibrary;
@@ -41,6 +46,7 @@ export class ApiRouter {
       },
     };
     this.config = { ...this.config, ...config };
+    this.storageDrivers = this.config.storageDrivers;
     this.router = Router();
     this.setupRoutes();
   }
@@ -370,6 +376,27 @@ export class ApiRouter {
       code,
       timestamp: new Date().toISOString(),
     });
+  }
+
+  /**
+   * Get storage driver for a specific disk
+   * Delegates to the underlying MediaLibrary instance or uses pre-initialized drivers
+   *
+   * @param diskName - The name of the disk (e.g., 'local', 'public', 'temp')
+   * @returns StorageDriver instance for the specified disk
+   * @throws Error if disk is not configured
+   */
+  public getStorageDriver(diskName: string): StorageDriver {
+    // Use pre-initialized drivers if available
+    if (this.storageDrivers?.has(diskName)) {
+      const driver = this.storageDrivers.get(diskName);
+      if (driver) {
+        return driver;
+      }
+    }
+
+    // Fallback to mediaLibrary's method
+    return this.mediaLibrary.getStorageDriver(diskName);
   }
 
   /**
