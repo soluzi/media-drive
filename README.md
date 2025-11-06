@@ -1,4 +1,4 @@
-# Media Drive v3.1.0
+# Media Drive v3.2.0
 
 > Modular, TypeScript-first media library for Node.js applications  
 > Inspired by Laravel Media Library
