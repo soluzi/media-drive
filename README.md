@@ -6,12 +6,15 @@
 [![npm version](https://badge.fury.io/js/media-drive.svg)](https://badge.fury.io/js/media-drive)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Upgrading from v2.x?
+## Upgrading?
 
-See the **[V3 Migration & Feature Guide](./versions/V3_MIGRATION_GUIDE.md)** for a comprehensive upgrade guide. v3.0 introduces **stored file paths** to support non-deterministic path generators.
+- **From v3.1.x?** See [CHANGELOG.md](./CHANGELOG.md#320---2025-11-07) - v3.2.0 has **breaking changes for HTTP API consumers** (response format changed)
+- **From v2.x?** See the **[V3 Migration & Feature Guide](./versions/V3_MIGRATION_GUIDE.md)** - v3.0 introduces **stored file paths** to support non-deterministic path generators
+- **From v1.x?** See [V2 Migration Guide](./versions/V2_MIGRATION_GUIDE.md)
 
 Quick links:
 
+- [CHANGELOG.md](./CHANGELOG.md) - Latest changes and breaking changes
 - [Full V3 Feature Guide](./versions/V3_MIGRATION_GUIDE.md) - Complete overview with examples
 - [V2 Migration Guide](./versions/V2_MIGRATION_GUIDE.md) - If upgrading from v1
 
@@ -24,7 +27,17 @@ Quick links:
 - **Async Job Processing** - BullMQ integration for background tasks
 - **Security** - MIME type validation, file size limits, signed URLs
 - **CLI Tools** - Generate configs, run diagnostics, manage migrations
-- **Non-Breaking API** - Backward compatible with v1
+- **Backward Compatible** - Programmatic API remains unchanged from v1
+
+### v3 Enhanced Features (EnhancedMediaLibrary)
+
+- **Built-in Multipart Parsing** - No multer dependency needed
+- **File Validation** - MIME types, content validation, size limits
+- **REST API** - Auto-generated endpoints for upload, download, list, delete
+- **Upload Progress** - Built-in progress tracking
+- **Error Handling** - Express-compatible error middleware
+- **Standardized API Responses** - Consistent response format with HTTP response helpers
+- **Multi-Disk Support** - Pre-initialized storage drivers and dynamic disk selection
 
 ## Installation
 
@@ -142,6 +155,7 @@ src/
     contracts/    # Public interfaces
     errors/       # Custom error types
     logger/       # Logging facade
+    responders/  # HTTP response helpers
     utils/        # Shared utilities
   config/         # Zod-based configuration
   registry/       # DI-lite registry
@@ -150,8 +164,12 @@ src/
   queue/          # Async job drivers
   strategies/     # File naming & path generation
   media/          # Application services
+  validation/     # File validation framework
   http/           # Express adapters
+  migration/      # Database migration utilities
   cli/            # Command-line tools
+  factory.ts      # Main factory function
+  types.ts        # Shared TypeScript types
 ```
 
 ## Extensibility
@@ -186,9 +204,11 @@ npm run test:coverage     # With coverage report
 - 7 test suites
 - 100% pass rate
 
-## Migration from v1
+## Migration
 
-Media Drive v3 maintains backward compatibility:
+### From v1/v2
+
+Media Drive v3 maintains backward compatibility for programmatic API:
 
 ```typescript
 // v1 (still works with deprecation warning)
@@ -197,13 +217,29 @@ import { initMediaLibrary, MediaLibrary } from "media-drive";
 initMediaLibrary(config);
 const service = new MediaLibrary(prisma);
 
-// v2 (recommended)
+// v2/v3 Standard (recommended for core features)
 import { createMediaLibrary } from "media-drive";
 
 const service = createMediaLibrary({ config, prisma });
+
+// v3 Enhanced (recommended for HTTP features)
+import { createEnhancedMediaLibrary } from "media-drive";
+
+const service = createEnhancedMediaLibrary({ config, prisma });
+app.use("/api/media", service.getRouter());
 ```
 
 All public methods (`attachFile`, `attachFromUrl`, `list`, `remove`, `resolveFileUrl`, etc.) remain unchanged.
+
+### From v3.1.x to v3.2.0
+
+⚠️ **Breaking Changes for HTTP API Consumers**: Response format has changed. See [CHANGELOG.md](./CHANGELOG.md#320---2025-11-07) for migration guide.
+
+- Error responses: `{ error: string }` → `{ success: false, message: string }`
+- Upload responses: Data structure changed (now nested under `data.media`)
+- Delete responses: Now includes `data: {}` field
+
+Programmatic API (`MediaLibrary` and `EnhancedMediaLibrary` methods) remains unchanged.
 
 ## Contributing
 
@@ -219,7 +255,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for architecture details.
 
 ## License
 
-MIT © [Dadda Abdelghafour](https://github.com/soluzi)
+MIT © [Dadda Abdelghafour](https://www.abdelghafourdadda.dev)
 
 ## Acknowledgments
 
@@ -239,4 +275,4 @@ Inspired by [Laravel Media Library](https://github.com/spatie/laravel-medialibra
 
 ---
 
-**v2.0.0** - Complete architecture rewrite with modularity, extensibility, and type safety.
+**v3.2.0** - Enhanced HTTP features, built-in validation, REST API, and comprehensive response helpers.
