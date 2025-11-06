@@ -60,7 +60,7 @@ export class MediaLibrary {
    * Get storage driver for a specific disk
    * Caches drivers to avoid recreating them
    */
-  private getStorageDriver(diskName: string): StorageDriver {
+  public getStorageDriver(diskName: string): StorageDriver {
     // Check cache first
     const cached = this.storageDriverCache.get(diskName);
     if (cached) {
