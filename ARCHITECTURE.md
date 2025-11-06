@@ -4,6 +4,11 @@
 
 Media Drive v3 builds on the modular v2 architecture with enhanced HTTP features, built-in validation, and REST API capabilities. The package maintains **100% backward compatibility** while introducing powerful new features for modern web applications.
 
+### Two Library Options
+
+- **MediaLibrary** (`createMediaLibrary`): Core library with storage, conversions, and queue support
+- **EnhancedMediaLibrary** (`createEnhancedMediaLibrary`): Extends MediaLibrary with built-in HTTP middleware, validation, multipart parsing, and REST API endpoints
+
 ## Key Achievements
 
 ### ✅ Modular Architecture
@@ -34,33 +39,44 @@ Media Drive v3 builds on the modular v2 architecture with enhanced HTTP features
 - **Express Integration**: Ready-to-use router with auth hooks
 - **Logger Facade**: Pluggable logging (console, Winston, Pino)
 
+### ✅ HTTP & Validation (v3)
+
+- **Built-in Multipart Parsing**: No multer dependency needed
+- **File Validation**: MIME types, content validation, size limits
+- **REST API**: Auto-generated endpoints for upload, download, list, delete
+- **Upload Progress**: Built-in progress tracking
+- **Error Handling**: Express-compatible error middleware
+
 ## Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   createMediaLibrary()                  │
-│                    (Factory Function)                   │
-└───────────────────────┬─────────────────────────────────┘
-                        │
-                        ▼
-           ┌────────────────────────┐
-           │   MediaLibrary         │  ◄── Main Orchestrator
-           │   - attachFile()       │
-           │   - attachFromUrl()    │
-           │   - list()             │
-           │   - remove()           │
-           │   - resolveFileUrl()   │
-           └────────────┬───────────┘
-                        │
-        ┌───────────────┼───────────────┐
-        │               │               │
-        ▼               ▼               ▼
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│FileService  │ │UrlService   │ │QueueDriver  │
-│- upload()   │ │- resolveUrl │ │- enqueue()  │
-│- delete()   │ └─────────────┘ │- status()   │
-└──────┬──────┘                 │- stats()    │
-       │                        └─────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│              Factory Functions                              │
+│  createMediaLibrary()  |  createEnhancedMediaLibrary()      │
+└───────────────┬───────────────────────┬─────────────────────┘
+                │                       │
+                ▼                       ▼
+    ┌──────────────────────┐  ┌──────────────────────────┐
+    │   MediaLibrary       │  │  EnhancedMediaLibrary    │
+    │   (Core Features)    │  │  (HTTP + Core Features)  │
+    │   - attachFile()     │  │  - All MediaLibrary      │
+    │   - attachFromUrl()  │  │  - uploadMiddleware()    │
+    │   - list()           │  │  - getRouter()           │
+    │   - remove()         │  │  - attachFromRequest()   │
+    │   - resolveFileUrl() │  │  - errorHandler()        │
+    └───────────┬──────────┘  └────────────┬─────────────┘
+                │                          │
+                └──────────┬───────────────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+        ▼                  ▼                  ▼
+┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+│FileService  │   │UrlService   │   │QueueDriver  │
+│- upload()   │   │- resolveUrl │   │- enqueue()  │
+│- delete()   │   └─────────────┘   │- status()   │
+└──────┬──────┘                     │- stats()    │
+       │                            └─────────────┘
        │
   ┌────┴────┬──────────┬─────────────┐
   ▼         ▼          ▼             ▼
@@ -81,18 +97,28 @@ src/
 │   │   ├── queue-driver.ts
 │   │   ├── path-generator.ts
 │   │   ├── file-namer.ts
-│   │   └── url-signer.ts
+│   │   ├── url-signer.ts
+│   │   └── index.ts
 │   ├── errors/              # Custom error types
+│   │   └── index.ts
 │   ├── logger/              # Logging facade
-│   └── utils/               # Shared utilities
+│   │   └── index.ts
+│   ├── responders/          # HTTP response helpers
+│   │   └── http.ts
+│   ├── utils/               # Shared utilities
+│   │   ├── response-keys.ts
+│   │   └── index.ts
+│   └── index.ts
 │
 ├── config/                  # Zod-based configuration
 │   ├── schema.ts            # Config schema & types
-│   └── loader.ts            # Env & file config loading
+│   ├── loader.ts            # Env & file config loading
+│   └── index.ts
 │
 ├── registry/                # DI-lite registry
 │   ├── tokens.ts            # Service tokens
-│   └── registry.ts          # Registry implementation
+│   ├── registry.ts          # Registry implementation
+│   └── index.ts
 │
 ├── storage/                 # Storage drivers
 │   ├── local/
@@ -101,30 +127,43 @@ src/
 │   │   └── driver.s3.ts
 │   ├── bunnycdn/
 │   │   └── driver.bunny.ts
-│   └── storage-factory.ts
+│   ├── storage-factory.ts
+│   └── index.ts
 │
 ├── conversions/             # Image processors
 │   ├── sharp-processor.ts
-│   └── helpers.ts
+│   ├── helpers.ts
+│   └── index.ts
 │
 ├── queue/                   # Async job drivers
 │   ├── bullmq-driver.ts
-│   └── in-memory-driver.ts
+│   ├── in-memory-driver.ts
+│   └── index.ts
 │
 ├── strategies/              # File naming & path generation
 │   ├── file-namers.ts
-│   └── path-generators.ts
+│   ├── path-generators.ts
+│   └── index.ts
 │
 ├── media/                   # Application services
 │   ├── media-library.ts     # Main orchestrator
+│   ├── enhanced-media-library.ts  # Enhanced with HTTP support
 │   ├── file-service.ts      # File operations
 │   ├── url-service.ts       # URL resolution
-│   ├── validation.ts        # Input validation
-│   └── file-type-detector.ts
+│   ├── file-type-detector.ts
+│   └── index.ts
+│
+├── validation/              # File validation
+│   ├── file-validator.ts    # Validation framework
+│   └── index.ts
 │
 ├── http/                    # Express adapters
-│   ├── express-router.ts
-│   └── middlewares.ts
+│   ├── api-router.ts        # REST API routes
+│   ├── multipart.ts         # Multipart parsing middleware
+│   └── index.ts
+│
+├── migration/               # Database migration utilities
+│   └── index.ts
 │
 ├── cli/                     # Command-line tools
 │   ├── commands/
@@ -134,6 +173,7 @@ src/
 │   └── index.ts
 │
 ├── factory.ts               # Main factory function
+├── types.ts                 # Shared TypeScript types
 └── index.ts                 # Package entry point
 ```
 
@@ -155,9 +195,13 @@ src/
 const service = new MediaLibrary(prisma);
 await service.attachFile("User", "123", file);
 
-// v2 (recommended)
+// v2/v3 Standard (recommended for core features)
 const service = createMediaLibrary({ prisma });
 await service.attachFile("User", "123", file);
+
+// v3 Enhanced (recommended for HTTP features)
+const service = createEnhancedMediaLibrary({ prisma });
+app.use("/api/media", service.getRouter());
 ```
 
 ## Migration Path
@@ -165,6 +209,7 @@ await service.attachFile("User", "123", file);
 1. **Phase 1**: Continue using v1 API (works as-is)
 2. **Phase 2**: Switch to `createMediaLibrary()` factory
 3. **Phase 3**: Leverage new features (custom drivers, strategies, etc.)
+4. **Phase 4** (v3): Use `createEnhancedMediaLibrary()` for HTTP features
 
 ## Testing Strategy
 
@@ -184,10 +229,60 @@ await service.attachFile("User", "123", file);
 ## Security Features
 
 1. **MIME Type Validation**: Server-side detection using `file-type`
-2. **File Size Limits**: Configurable per-disk limits
-3. **Signed URLs**: Temporary access to private files
-4. **Forbidden MIME Types**: Blacklist dangerous file types
-5. **Sanitization**: File names and paths sanitized
+2. **Content Validation**: Magic number checking to prevent spoofing
+3. **File Size Limits**: Configurable per-disk and per-upload limits
+4. **Signed URLs**: Temporary access to private files
+5. **Forbidden MIME Types**: Blacklist dangerous file types
+6. **Sanitization**: File names and paths sanitized
+7. **Built-in Validation**: EnhancedMediaLibrary includes comprehensive validation
+
+## EnhancedMediaLibrary Features
+
+The `EnhancedMediaLibrary` extends `MediaLibrary` with HTTP capabilities:
+
+### HTTP Middleware
+
+- **Multipart Parsing**: Built-in `uploadMiddleware()` replaces multer dependency
+- **File Upload**: Single file, multiple files, and streaming uploads
+- **Progress Tracking**: Real-time upload progress via `req.uploadProgress`
+- **Error Handling**: Express-compatible `errorHandler()` middleware
+
+### Validation
+
+- **MIME Type Validation**: Server-side detection with magic number checking
+- **File Size Limits**: Per-upload and per-disk limits
+- **Content Validation**: Prevents file type spoofing
+- **Custom Rules**: Extensible validation API with sync/async support
+
+### REST API
+
+- **Auto-generated Routes**: `getRouter()` creates Express router with:
+  - `POST /upload` - Upload files
+  - `GET /:id` - Get file metadata
+  - `GET /:id/download` - Download files
+  - `GET /` - List files with filtering
+  - `DELETE /:id` - Delete files
+  - `GET /health` - Health check
+
+### Usage Example
+
+```typescript
+import { createEnhancedMediaLibrary } from "media-drive";
+import express from "express";
+
+const mediaLibrary = createEnhancedMediaLibrary({
+  config: {
+    disk: "local",
+    validation: {
+      maxFileSize: 10 * 1024 * 1024,
+      allowedMimeTypes: ["image/jpeg", "image/png"],
+    },
+  },
+});
+
+const app = express();
+app.use("/api/media", mediaLibrary.getRouter());
+```
 
 ## Extensibility Examples
 
@@ -244,11 +339,11 @@ class TimestampFileNamer implements FileNamer {
 
 ## Contributors
 
-Built with ❤️ by Dadda Abdelghafour
+Built with ❤️ by [Dadda Abdelghafour](https://www.abdelghafourdadda.dev)
 
 Inspired by [Laravel Media Library](https://github.com/spatie/laravel-medialibrary)
 
 ---
 
-**Version**: 2.0.0  
+**Version**: 3.2.0  
 **License**: MIT
