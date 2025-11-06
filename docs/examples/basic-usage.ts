@@ -1,13 +1,22 @@
 /**
  * Basic Usage Example
  *
- * This example shows the most common usage patterns for Media Drive v3
+ * This example shows the most common usage patterns for Media Drive v3.
+ * Uses standardized HTTP responders for consistent API responses.
  */
 
 import { createMediaLibrary } from "media-drive";
 import { PrismaClient } from "@prisma/client";
 import express from "express";
 import multer from "multer";
+import {
+  noFile,
+  createdWithMessage,
+  ok,
+  notFound,
+  internalError,
+  okWithMessage,
+} from "media-drive/core";
 
 // 1. Setup Prisma
 const prisma = new PrismaClient();
@@ -38,7 +47,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
+      return noFile(res);
     }
 
     const media = await mediaLibrary.attachFile(
@@ -54,18 +63,21 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       }
     );
 
-    res.json({
-      success: true,
-      media: {
-        id: media.id,
-        name: media.name,
-        size: media.size,
-        mimeType: media.mime_type,
+    return createdWithMessage(
+      res,
+      {
+        media: {
+          id: media.id,
+          name: media.name,
+          size: media.size,
+          mimeType: media.mime_type,
+        },
       },
-    });
+      "File uploaded successfully"
+    );
   } catch (error) {
     console.error("Upload error:", error);
-    res.status(500).json({ error: "Upload failed" });
+    return internalError(res, "Upload failed");
   }
 });
 
@@ -73,9 +85,9 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 app.get("/media/:id", async (req, res) => {
   try {
     const url = await mediaLibrary.resolveFileUrl(req.params.id);
-    res.json({ url });
+    return ok(res, { url });
   } catch (error) {
-    res.status(404).json({ error: "Media not found" });
+    return notFound(res, "Media not found");
   }
 });
 
@@ -83,9 +95,9 @@ app.get("/media/:id", async (req, res) => {
 app.get("/users/:userId/media", async (req, res) => {
   try {
     const media = await mediaLibrary.list("User", req.params.userId);
-    res.json({ media });
+    return ok(res, { media });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch media" });
+    return internalError(res, "Failed to fetch media");
   }
 });
 
@@ -93,9 +105,9 @@ app.get("/users/:userId/media", async (req, res) => {
 app.delete("/media/:id", async (req, res) => {
   try {
     await mediaLibrary.remove(req.params.id);
-    res.json({ success: true });
+    return okWithMessage(res, { success: true }, "Media deleted successfully");
   } catch (error) {
-    res.status(500).json({ error: "Failed to delete media" });
+    return internalError(res, "Failed to delete media");
   }
 });
 

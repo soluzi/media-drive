@@ -1,13 +1,22 @@
 /**
  * Async Conversions Example
  *
- * This example shows how to use BullMQ for asynchronous image processing
+ * This example shows how to use BullMQ for asynchronous image processing.
+ * Uses standardized HTTP responders for consistent API responses.
  */
 
 import { createMediaLibrary } from "media-drive";
 import { PrismaClient } from "@prisma/client";
 import express from "express";
 import multer from "multer";
+import {
+  noFile,
+  createdWithMessage,
+  ok,
+  notFound,
+  internalError,
+  uploadError,
+} from "media-drive/core";
 
 // 1. Setup Prisma
 const prisma = new PrismaClient();
@@ -45,7 +54,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.post("/upload-async", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
+      return noFile(res);
     }
 
     // Upload file without conversions first
@@ -67,20 +76,22 @@ app.post("/upload-async", upload.single("file"), async (req, res) => {
       webp: { width: 800, height: 600, format: "webp" },
     });
 
-    res.json({
-      success: true,
-      media: {
-        id: media.id,
-        name: media.name,
-        size: media.size,
-        mimeType: media.mime_type,
+    return createdWithMessage(
+      res,
+      {
+        media: {
+          id: media.id,
+          name: media.name,
+          size: media.size,
+          mimeType: media.mime_type,
+        },
+        jobId,
       },
-      jobId,
-      message: "File uploaded, conversions queued for processing",
-    });
+      "File uploaded, conversions queued for processing"
+    );
   } catch (error) {
     console.error("Upload error:", error);
-    res.status(500).json({ error: "Upload failed" });
+    return uploadError(res, "Upload failed");
   }
 });
 
@@ -88,9 +99,9 @@ app.post("/upload-async", upload.single("file"), async (req, res) => {
 app.get("/job/:jobId/status", async (req, res) => {
   try {
     const status = await mediaLibrary.getConversionJobStatus(req.params.jobId);
-    res.json({ status });
+    return ok(res, { status });
   } catch (error) {
-    res.status(404).json({ error: "Job not found" });
+    return notFound(res, "Job not found");
   }
 });
 
@@ -98,9 +109,9 @@ app.get("/job/:jobId/status", async (req, res) => {
 app.get("/queue/stats", async (req, res) => {
   try {
     const stats = await mediaLibrary.getQueueStats();
-    res.json({ stats });
+    return ok(res, { stats });
   } catch (error) {
-    res.status(500).json({ error: "Failed to get queue stats" });
+    return internalError(res, "Failed to get queue stats");
   }
 });
 

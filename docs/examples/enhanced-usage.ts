@@ -7,6 +7,7 @@
  * - Upload progress tracking
  * - Built-in API endpoints
  * - Better error handling
+ * - Standardized HTTP responders for consistent API responses
  */
 
 import express from "express";
@@ -15,6 +16,12 @@ import {
   createApiRouter,
   defineConfig,
 } from "media-drive";
+import {
+  created,
+  badRequest,
+  validationError,
+  fileTooLarge,
+} from "media-drive/core";
 
 // ==================== Basic Enhanced Setup ====================
 
@@ -107,15 +114,15 @@ app.post(
         collection: req.body.collection || "default",
       });
 
-      res.json({
-        success: true,
-        data: result.media,
+      return created(res, {
+        media: result.media,
         validation: result.validation,
       });
     } catch (error) {
-      res.status(400).json({
-        error: error instanceof Error ? error.message : "Upload failed",
-      });
+      return badRequest(
+        res,
+        error instanceof Error ? error.message : "Upload failed"
+      );
     }
   }
 );
@@ -138,16 +145,16 @@ app.post(
       // Get upload progress info
       const progress = mediaLibrary.getUploadProgress(req);
 
-      res.json({
-        success: true,
-        data: result.media,
+      return created(res, {
+        media: result.media,
         validation: result.validation,
         progress,
       });
     } catch (error) {
-      res.status(400).json({
-        error: error instanceof Error ? error.message : "Upload failed",
-      });
+      return badRequest(
+        res,
+        error instanceof Error ? error.message : "Upload failed"
+      );
     }
   }
 );
@@ -226,25 +233,25 @@ mediaLibrary.updateMultipartConfig({
 // Global error handler for media-related errors
 app.use(
   (
-    error: any,
+    error: unknown,
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) => {
-    if (error.message && error.message.includes("File validation failed")) {
-      return res.status(400).json({
-        error: "File validation failed",
-        details: error.message,
-        code: "VALIDATION_ERROR",
-      });
+    if (
+      error instanceof Error &&
+      error.message.includes("File validation failed")
+    ) {
+      return validationError(res, `File validation failed: ${error.message}`);
     }
 
-    if (error.code === "LIMIT_FILE_SIZE") {
-      return res.status(400).json({
-        error: "File too large",
-        message: "File size exceeds maximum allowed size",
-        code: "FILE_TOO_LARGE",
-      });
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "LIMIT_FILE_SIZE"
+    ) {
+      return fileTooLarge(res, "File size exceeds maximum allowed size");
     }
 
     next(error);

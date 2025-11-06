@@ -1,10 +1,10 @@
 /**
  * Literal Types Preservation Example
- * 
+ *
  * This example shows how to preserve literal types when using defineConfig
  */
 
-import { defineConfig } from "../../src/config/schema";
+import { defineConfig } from "media-drive";
 
 // Method 1: Using 'as const' assertions (recommended)
 const config1 = defineConfig({

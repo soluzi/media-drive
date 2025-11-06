@@ -5,8 +5,7 @@
  * the format: mediaId/fileName
  */
 
-import { createMediaLibrary } from "../../src/factory";
-import { defineConfig } from "../../src/config/schema";
+import { createMediaLibrary, defineConfig } from "media-drive";
 import { Readable } from "stream";
 
 // Configure Media Drive to use simple path strategy
