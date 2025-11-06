@@ -293,51 +293,130 @@ interface MediaRecord {
 
 ## Express Router
 
-### `createMediaRouter(mediaLibrary, options?)`
+### `createApiRouter(mediaLibrary, config?)`
 
 Create an Express router with media endpoints.
 
 ```typescript
-function createMediaRouter(
-  mediaLibrary: MediaLibrary,
-  options?: RouterOptions
-): Router;
+function createApiRouter(
+  mediaLibrary: EnhancedMediaLibrary,
+  config?: ApiRouterConfig
+): ApiRouter;
 ```
 
 **Options:**
 
 ```typescript
-interface RouterOptions {
-  authMiddleware?: (req, res, next) => void;
-  errorHandler?: (err, req, res, next) => void;
+interface ApiRouterConfig {
+  basePath: string; // Default: "/api/media"
+  endpoints: {
+    upload: string;
+    download: string;
+    delete: string;
+    list: string;
+    info: string;
+  };
+  cors?: boolean;
+  authentication?: boolean;
+  rateLimiting?: {
+    uploads: string;
+    downloads: string;
+  };
 }
 ```
 
 **Example:**
 
 ```typescript
-import { createMediaRouter } from "media-drive/http";
+import { createEnhancedMediaLibrary, createApiRouter } from "media-drive";
 
-const router = createMediaRouter(mediaLibrary, {
-  authMiddleware: (req, res, next) => {
-    // Your auth logic
-    next();
+const mediaLibrary = createEnhancedMediaLibrary({ config, prisma });
+
+const apiRouter = createApiRouter(mediaLibrary, {
+  basePath: "/api/media",
+  endpoints: {
+    upload: "/upload",
+    download: "/:id/download",
+    delete: "/:id",
+    list: "/",
+    info: "/:id",
   },
+  cors: true,
 });
 
-app.use("/api", router);
+app.use("/api/media", apiRouter.getRouter());
 ```
 
 **Endpoints:**
 
-- `GET /media/:modelType/:modelId` - List media
-- `POST /media/:modelType/:modelId` - Upload file
-- `POST /media/:modelType/:modelId/from-url` - Upload from URL
-- `DELETE /media/:mediaId` - Delete media
-- `GET /media/:mediaId/url` - Get file URL
-- `POST /media/:mediaId/conversions` - Queue conversions
-- `GET /jobs/:jobId` - Get job status
-- `GET /queue/stats` - Get queue stats
+- `POST /api/media/upload` - Upload file
+- `GET /api/media/:id/download` - Download file
+- `GET /api/media/:id` - Get file info
+- `GET /api/media` - List media (with query params: modelType, modelId, collection)
+- `DELETE /api/media/:id` - Delete media
+
+---
+
+## HTTP Response Helpers
+
+Media Drive provides standardized HTTP response helpers for consistent API responses:
+
+```typescript
+import {
+  ok,
+  created,
+  createdWithMessage,
+  okWithMessage,
+  noContent,
+  badRequest,
+  notFound,
+  internalError,
+  noFile,
+  fileTooLarge,
+  validationError,
+  uploadError,
+} from "media-drive/core";
+```
+
+**Example:**
+
+```typescript
+import { ok, created, noFile, internalError } from "media-drive/core";
+
+app.post("/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return noFile(res);
+    }
+
+    const media = await mediaLibrary.attachFile("User", "123", req.file);
+    return created(res, { media });
+  } catch (error) {
+    return internalError(res, "Upload failed");
+  }
+});
+```
+
+**Response Format:**
+
+All helpers return responses in this format:
+
+```typescript
+// Success
+{
+  success: true,
+  data: T,
+  message?: string,
+  pagination?: PageMeta
+}
+
+// Error
+{
+  success: false,
+  message: string,
+  code?: string
+}
+```
 
 ---
 

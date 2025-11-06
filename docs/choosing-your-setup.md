@@ -51,15 +51,25 @@ const mediaLibrary = createMediaLibrary({
 });
 
 // You handle the upload middleware
-app.post("/upload", upload.single("file"), async (req, res) => {
-  const media = await mediaLibrary.attachFile(
-    "User",
-    req.body.userId,
-    req.file!,
-    { collection: "avatar" }
-  );
+import { noFile, created, internalError } from "media-drive/core";
 
-  res.json({ media });
+app.post("/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return noFile(res);
+    }
+
+    const media = await mediaLibrary.attachFile(
+      "User",
+      req.body.userId,
+      req.file,
+      { collection: "avatar" }
+    );
+
+    return created(res, { media });
+  } catch (error) {
+    return internalError(res, "Upload failed");
+  }
 });
 ```
 
@@ -136,18 +146,30 @@ const mediaLibrary = createEnhancedMediaLibrary({
 });
 
 // Option A: Use built-in upload middleware (NO MULTER NEEDED!)
+import { created, badRequest } from "media-drive/core";
+
 app.post(
   "/upload",
   mediaLibrary.uploadMiddleware(), // Handles multipart automatically
   mediaLibrary.errorHandler(), // Handles errors
   async (req, res) => {
-    const result = await mediaLibrary.attachFromRequest(req, {
-      modelType: "User",
-      modelId: req.body.userId,
-      collection: "avatar",
-    });
+    try {
+      const result = await mediaLibrary.attachFromRequest(req, {
+        modelType: "User",
+        modelId: req.body.userId,
+        collection: "avatar",
+      });
 
-    res.json({ media: result.media, validation: result.validation });
+      return created(res, {
+        media: result.media,
+        validation: result.validation,
+      });
+    } catch (error) {
+      return badRequest(
+        res,
+        error instanceof Error ? error.message : "Upload failed"
+      );
+    }
   }
 );
 
@@ -226,15 +248,21 @@ const mediaLibrary = createEnhancedMediaLibrary({
   }
 });
 
+import { created, badRequest } from "media-drive/core";
+
 app.post("/upload",
   mediaLibrary.uploadMiddleware(), // Built-in!
   mediaLibrary.errorHandler(),
   async (req, res) => {
-    const result = await mediaLibrary.attachFromRequest(req, {
-      modelType: "User",
-      modelId: req.body.userId
-    });
-    res.json(result);
+    try {
+      const result = await mediaLibrary.attachFromRequest(req, {
+        modelType: "User",
+        modelId: req.body.userId
+      });
+      return created(res, result);
+    } catch (error) {
+      return badRequest(res, error instanceof Error ? error.message : "Upload failed");
+    }
   }
 );
 ```

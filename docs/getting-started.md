@@ -99,24 +99,49 @@ await mediaLibrary.remove(media.id);
 ```typescript
 import express from "express";
 import multer from "multer";
-import { createMediaLibrary, createMediaRouter } from "media-drive";
+import { createMediaLibrary, createApiRouter } from "media-drive";
+import { noFile, created, internalError } from "media-drive/core";
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-const mediaLibrary = createMediaLibrary({ prisma });
+const mediaLibrary = createMediaLibrary({
+  config: {
+    /* your config */
+  },
+  prisma,
+});
 
 // Mount media routes
-app.use("/api", createMediaRouter(mediaLibrary));
+const apiRouter = createApiRouter(mediaLibrary, {
+  basePath: "/api/media",
+  endpoints: {
+    upload: "/upload",
+    download: "/:id/download",
+    delete: "/:id",
+    list: "/",
+    info: "/:id",
+  },
+});
+app.use("/api/media", apiRouter.getRouter());
 
-// Custom upload endpoint
+// Custom upload endpoint with standardized responses
 app.post("/upload", upload.single("file"), async (req, res) => {
-  const media = await mediaLibrary.attachFile(
-    "Post",
-    req.body.postId,
-    req.file
-  );
-  res.json({ media });
+  try {
+    if (!req.file) {
+      return noFile(res);
+    }
+
+    const media = await mediaLibrary.attachFile(
+      "Post",
+      req.body.postId,
+      req.file
+    );
+
+    return created(res, { media });
+  } catch (error) {
+    return internalError(res, "Upload failed");
+  }
 });
 ```
 

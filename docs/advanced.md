@@ -154,25 +154,68 @@ import { Logger, setLogger } from "media-drive/core";
 class WinstonLogger implements Logger {
   constructor(private winston: any) {}
 
-  debug(message: string, meta?: any): void {
+  debug(message: string, meta?: Record<string, unknown>): void {
     this.winston.debug(message, meta);
   }
 
-  info(message: string, meta?: any): void {
+  info(message: string, meta?: Record<string, unknown>): void {
     this.winston.info(message, meta);
   }
 
-  warn(message: string, meta?: any): void {
+  warn(message: string, meta?: Record<string, unknown>): void {
     this.winston.warn(message, meta);
   }
 
-  error(message: string, meta?: any): void {
+  error(message: string, meta?: Record<string, unknown>): void {
     this.winston.error(message, meta);
   }
 }
 
 // Set globally
 setLogger(new WinstonLogger(winstonInstance));
+```
+
+---
+
+## HTTP Response Helpers
+
+Use standardized HTTP responders for consistent API responses:
+
+```typescript
+import {
+  ok,
+  created,
+  createdWithMessage,
+  okWithMessage,
+  noContent,
+  badRequest,
+  notFound,
+  internalError,
+  noFile,
+  fileTooLarge,
+  validationError,
+  uploadError,
+  okPaginated,
+} from "media-drive/core";
+
+// Success responses
+ok(res, { data: "value" }); // 200
+created(res, { media }); // 201
+createdWithMessage(res, { media }, "File uploaded"); // 201 with message
+okWithMessage(res, { success: true }, "Deleted"); // 200 with message
+noContent(res); // 204
+
+// Error responses
+badRequest(res, "Invalid input");
+notFound(res, "Resource not found");
+internalError(res, "Server error");
+noFile(res); // Convenience for missing file
+fileTooLarge(res, "File exceeds limit", maxSize);
+validationError(res, "Validation failed");
+uploadError(res, "Upload failed");
+
+// Paginated responses
+okPaginated(res, mediaArray, total, page, perPage);
 ```
 
 ---

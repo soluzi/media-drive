@@ -244,18 +244,24 @@ const upload = multer({
   },
 });
 
+import { noFile, created, internalError } from "media-drive/core";
+
 app.post("/upload", upload.single("file"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
+  try {
+    if (!req.file) {
+      return noFile(res);
+    }
+
+    const media = await mediaLibrary.attachFile(
+      "User",
+      req.body.userId,
+      req.file
+    );
+
+    return created(res, { media });
+  } catch (error) {
+    return internalError(res, "Upload failed");
   }
-
-  const media = await mediaLibrary.attachFile(
-    "User",
-    req.body.userId,
-    req.file
-  );
-
-  res.json({ media });
 });
 ```
 
