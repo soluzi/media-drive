@@ -1,20 +1,43 @@
+/**
+ * Multipart Middleware
+ *
+ * Express middleware for handling multipart/form-data file uploads.
+ * Wraps Multer with additional features like progress tracking and streaming.
+ */
+
 import { Request, Response, NextFunction } from "express";
 import multer from "multer";
 
+/**
+ * Configuration for multipart middleware.
+ */
 export interface MultipartConfig {
+  /** Whether multipart handling is enabled. */
   enabled: boolean;
+  /** Field name for file uploads (default: "file"). */
   fileField?: string;
+  /** Upload limits configuration. */
   limits?: {
+    /** Maximum file size in bytes. */
     fileSize?: number;
+    /** Maximum number of files. */
     files?: number;
+    /** Maximum number of fields. */
     fields?: number;
+    /** Maximum field size in bytes. */
     fieldSize?: number;
+    /** Maximum field name size in bytes. */
     fieldNameSize?: number;
+    /** Maximum number of parts. */
     parts?: number;
   };
+  /** Storage type: "memory" for buffers, "disk" for temporary files. */
   storage?: "memory" | "disk";
+  /** Temporary directory for disk storage. */
   tempDir?: string;
+  /** Whether to preserve file path. */
   preservePath?: boolean;
+  /** Custom file filter function. */
   fileFilter?: (
     req: Request,
     file: Express.Multer.File,
@@ -22,28 +45,52 @@ export interface MultipartConfig {
   ) => void;
 }
 
+/**
+ * Upload progress information.
+ */
 export interface UploadProgress {
+  /** Form field name. */
   fieldName: string;
+  /** Original filename. */
   originalName: string;
+  /** File encoding. */
   encoding: string;
+  /** MIME type. */
   mimetype: string;
+  /** File size in bytes. */
   size: number;
-  progress: number; // 0-100
+  /** Upload progress percentage (0-100). */
+  progress: number;
 }
 
+/**
+ * Extended Express Request with file upload information.
+ */
 export interface MultipartRequest extends Request {
+  /** Single uploaded file (if using single() middleware). */
   file?: Express.Multer.File | undefined;
+  /** Multiple uploaded files (if using array() or fields() middleware). */
   files?:
     | Express.Multer.File[]
     | { [fieldname: string]: Express.Multer.File[] }
     | undefined;
+  /** Upload progress tracking information. */
   uploadProgress?: UploadProgress[] | undefined;
 }
 
+/**
+ * Multipart middleware for handling file uploads.
+ * Provides Express middleware functions for single, multiple, and streaming uploads.
+ */
 export class MultipartMiddleware {
   private config: MultipartConfig;
   private upload!: multer.Multer;
 
+  /**
+   * Creates a new MultipartMiddleware instance.
+   *
+   * @param config - Multipart configuration options.
+   */
   constructor(config: MultipartConfig) {
     this.config = {
       enabled: true,
@@ -128,7 +175,11 @@ export class MultipartMiddleware {
   };
 
   /**
-   * Middleware for single file upload
+   * Middleware for single file upload.
+   * Attaches file to req.file.
+   *
+   * @param fieldName - Form field name (defaults to config.fileField or "file").
+   * @returns Express middleware function.
    */
   single(
     fieldName?: string
@@ -137,7 +188,12 @@ export class MultipartMiddleware {
   }
 
   /**
-   * Middleware for multiple files upload
+   * Middleware for multiple files upload.
+   * Attaches files array to req.files.
+   *
+   * @param fieldName - Form field name (defaults to config.fileField or "file").
+   * @param maxCount - Maximum number of files allowed.
+   * @returns Express middleware function.
    */
   array(
     fieldName?: string,
@@ -150,7 +206,11 @@ export class MultipartMiddleware {
   }
 
   /**
-   * Middleware for mixed field uploads
+   * Middleware for mixed field uploads.
+   * Handles multiple fields with different file limits.
+   *
+   * @param fields - Array of field configurations.
+   * @returns Express middleware function.
    */
   fields(
     fields: multer.Field[]
@@ -159,14 +219,21 @@ export class MultipartMiddleware {
   }
 
   /**
-   * Middleware for any number of files
+   * Middleware for any number of files from any field.
+   * Attaches files to req.files.
+   *
+   * @returns Express middleware function.
    */
   any(): (req: Request, res: Response, next: NextFunction) => void {
     return this.upload.any();
   }
 
   /**
-   * Enhanced middleware with progress tracking
+   * Enhanced middleware with progress tracking.
+   * Adds uploadProgress array to request with file information.
+   *
+   * @param fieldName - Form field name (defaults to config.fileField or "file").
+   * @returns Express middleware function with progress tracking.
    */
   withProgress(
     fieldName?: string
@@ -199,7 +266,11 @@ export class MultipartMiddleware {
   }
 
   /**
-   * Streaming upload middleware for large files
+   * Streaming upload middleware for large files.
+   * Sets up progress tracking for streaming uploads.
+   *
+   * @param fieldName - Form field name (defaults to config.fileField or "file").
+   * @returns Express middleware function for streaming uploads.
    */
   streaming(
     fieldName?: string
@@ -234,8 +305,11 @@ export class MultipartMiddleware {
   }
 
   /**
-   * Error handling middleware
-   * Returns any due to Express middleware type complexity
+   * Error handling middleware for upload errors.
+   * Handles Multer errors and file type validation errors.
+   * Returns any due to Express middleware type complexity.
+   *
+   * @returns Express error handling middleware function.
    */
   errorHandler(): any {
     return (
@@ -295,14 +369,19 @@ export class MultipartMiddleware {
   }
 
   /**
-   * Get upload configuration
+   * Get current upload configuration.
+   *
+   * @returns Copy of current configuration object.
    */
   getConfig(): MultipartConfig {
     return { ...this.config };
   }
 
   /**
-   * Update upload configuration
+   * Update upload configuration.
+   * Reinitializes Multer with new configuration.
+   *
+   * @param newConfig - Partial configuration to merge with existing config.
    */
   updateConfig(newConfig: Partial<MultipartConfig>): void {
     this.config = { ...this.config, ...newConfig };
@@ -311,7 +390,10 @@ export class MultipartMiddleware {
 }
 
 /**
- * Create multipart middleware with configuration
+ * Create multipart middleware with configuration.
+ *
+ * @param config - Multipart configuration options.
+ * @returns Configured MultipartMiddleware instance.
  */
 export function createMultipartMiddleware(
   config: MultipartConfig
@@ -320,7 +402,10 @@ export function createMultipartMiddleware(
 }
 
 /**
- * Default multipart middleware for media-drive
+ * Create default multipart middleware with sensible defaults.
+ * Uses memory storage, 10MB file size limit, and allows common file types.
+ *
+ * @returns MultipartMiddleware instance with default configuration.
  */
 export function defaultMultipartMiddleware(): MultipartMiddleware {
   return new MultipartMiddleware({

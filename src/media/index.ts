@@ -1,5 +1,8 @@
 /**
  * Media Module
+ *
+ * Exports media library services and utilities.
+ * Provides the main MediaLibrary class and supporting services for file operations.
  */
 
 export * from "./media-library";

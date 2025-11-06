@@ -1,38 +1,73 @@
+/**
+ * API Router
+ *
+ * Express router for media library HTTP endpoints.
+ * Provides RESTful API for uploading, downloading, listing, and managing media files.
+ */
+
 import { Router, Request, Response, NextFunction } from "express";
 import { EnhancedMediaLibrary } from "../media/enhanced-media-library";
 import { NotFoundError } from "../core/errors";
 import { StorageDriver } from "../core/contracts";
 
+/**
+ * Configuration for the API router.
+ */
 export interface ApiRouterConfig {
+  /** Base path for all API routes (default: "/api/media"). */
   basePath: string;
+  /** Whether authentication is required (not implemented, reserved for future use). */
   authentication?: boolean | undefined;
+  /** Rate limiting configuration (not implemented, reserved for future use). */
   rateLimiting?:
     | {
         uploads: string;
         downloads: string;
       }
     | undefined;
+  /** Endpoint path configurations. */
   endpoints: {
+    /** Upload endpoint path. */
     upload: string;
+    /** Download endpoint path. */
     download: string;
+    /** Delete endpoint path. */
     delete: string;
+    /** List endpoint path. */
     list: string;
+    /** Info endpoint path. */
     info: string;
   };
+  /** Whether CORS is enabled (not implemented, reserved for future use). */
   cors?: boolean | undefined;
+  /** Map of storage drivers by disk name (optional). */
   storageDrivers?: Map<string, StorageDriver> | undefined;
 }
 
+/**
+ * Extended Express Request with optional media library service.
+ */
 export interface ApiRequest extends Request {
+  /** Media library service instance (attached by middleware). */
   mediaLibrary?: EnhancedMediaLibrary;
 }
 
+/**
+ * API router for media library HTTP endpoints.
+ * Provides RESTful routes for file operations.
+ */
 export class ApiRouter {
   private mediaLibrary: EnhancedMediaLibrary;
   private config: ApiRouterConfig;
   private router: Router;
   private storageDrivers?: Map<string, StorageDriver> | undefined;
 
+  /**
+   * Creates a new ApiRouter instance.
+   *
+   * @param mediaLibrary - Enhanced media library service instance.
+   * @param config - Router configuration with endpoints and options.
+   */
   constructor(mediaLibrary: EnhancedMediaLibrary, config: ApiRouterConfig) {
     this.mediaLibrary = mediaLibrary;
     this.config = {
@@ -51,6 +86,10 @@ export class ApiRouter {
     this.setupRoutes();
   }
 
+  /**
+   * Set up all API routes.
+   * Configures upload, download, delete, list, info, and health check endpoints.
+   */
   private setupRoutes(): void {
     // Upload endpoint
     this.router.post(
@@ -102,7 +141,12 @@ export class ApiRouter {
   }
 
   /**
-   * Upload handler
+   * Upload endpoint handler.
+   * Handles file uploads with validation and returns media record.
+   *
+   * @param req - Express request with file and body parameters.
+   * @param res - Express response object.
+   * @param next - Express next function for error handling.
    */
   private async uploadHandler(
     req: Request,
@@ -154,7 +198,12 @@ export class ApiRouter {
   }
 
   /**
-   * Download handler
+   * Download endpoint handler.
+   * Resolves file URL and redirects to it.
+   *
+   * @param req - Express request with media ID and optional conversion/signed params.
+   * @param res - Express response object.
+   * @param next - Express next function for error handling.
    */
   private async downloadHandler(
     req: Request,
@@ -194,7 +243,12 @@ export class ApiRouter {
   }
 
   /**
-   * Delete handler
+   * Delete endpoint handler.
+   * Removes a media file and its database record.
+   *
+   * @param req - Express request with media ID parameter.
+   * @param res - Express response object.
+   * @param next - Express next function for error handling.
    */
   private async deleteHandler(
     req: Request,
@@ -231,7 +285,12 @@ export class ApiRouter {
   }
 
   /**
-   * List handler
+   * List endpoint handler.
+   * Returns all media files for a model instance, optionally filtered by collection.
+   *
+   * @param req - Express request with modelType, modelId, and optional collection query params.
+   * @param res - Express response object.
+   * @param next - Express next function for error handling.
    */
   private async listHandler(
     req: Request,
@@ -284,7 +343,12 @@ export class ApiRouter {
   }
 
   /**
-   * Info handler
+   * Info endpoint handler.
+   * Returns media file information and URL.
+   *
+   * @param req - Express request with media ID parameter.
+   * @param res - Express response object.
+   * @param next - Express next function for error handling.
    */
   private async infoHandler(
     req: Request,
@@ -327,7 +391,11 @@ export class ApiRouter {
   }
 
   /**
-   * Health check handler
+   * Health check endpoint handler.
+   * Returns API health status and version information.
+   *
+   * @param _req - Express request (unused).
+   * @param res - Express response object.
    */
   private healthHandler(_req: Request, res: Response): void {
     res.json({
@@ -338,7 +406,13 @@ export class ApiRouter {
   }
 
   /**
-   * Error handler
+   * Global error handler for API routes.
+   * Handles various error types and returns appropriate HTTP status codes.
+   *
+   * @param error - Error object.
+   * @param _req - Express request (unused).
+   * @param res - Express response object.
+   * @param _next - Express next function (unused).
    */
   private errorHandler(
     error: Error,
@@ -379,12 +453,12 @@ export class ApiRouter {
   }
 
   /**
-   * Get storage driver for a specific disk
-   * Delegates to the underlying MediaLibrary instance or uses pre-initialized drivers
+   * Get storage driver for a specific disk.
+   * Delegates to the underlying MediaLibrary instance or uses pre-initialized drivers.
    *
-   * @param diskName - The name of the disk (e.g., 'local', 'public', 'temp')
-   * @returns StorageDriver instance for the specified disk
-   * @throws Error if disk is not configured
+   * @param diskName - Name of the disk (e.g., "local", "s3", "bunnycdn").
+   * @returns StorageDriver instance for the specified disk.
+   * @throws {Error} If disk is not configured.
    */
   public getStorageDriver(diskName: string): StorageDriver {
     // Use pre-initialized drivers if available
@@ -400,21 +474,28 @@ export class ApiRouter {
   }
 
   /**
-   * Get Express router
+   * Get Express router instance.
+   *
+   * @returns Configured Express Router with all API routes.
    */
   getRouter(): Router {
     return this.router;
   }
 
   /**
-   * Get API configuration
+   * Get current API configuration.
+   *
+   * @returns Copy of current configuration object.
    */
   getConfig(): ApiRouterConfig {
     return { ...this.config };
   }
 
   /**
-   * Update API configuration
+   * Update API configuration.
+   * Reinitializes routes if endpoints changed.
+   *
+   * @param newConfig - Partial configuration to merge with existing config.
    */
   updateConfig(newConfig: Partial<ApiRouterConfig>): void {
     this.config = { ...this.config, ...newConfig };
@@ -425,7 +506,11 @@ export class ApiRouter {
 }
 
 /**
- * Create API router for media-drive
+ * Create API router for media library.
+ *
+ * @param mediaLibrary - Enhanced media library service instance.
+ * @param config - Partial router configuration (merged with defaults).
+ * @returns Configured ApiRouter instance.
  */
 export function createApiRouter(
   mediaLibrary: EnhancedMediaLibrary,
@@ -446,7 +531,9 @@ export function createApiRouter(
 }
 
 /**
- * Default API router configuration
+ * Get default API router configuration.
+ *
+ * @returns Default configuration object with standard endpoints.
  */
 export function defaultApiConfig(): Partial<ApiRouterConfig> {
   return {

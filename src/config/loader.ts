@@ -1,7 +1,8 @@
 /**
  * Configuration Loader
  *
- * Loads, validates, and merges configuration from multiple sources
+ * Loads, validates, and merges configuration from multiple sources.
+ * Supports environment variables and user-provided configuration with proper precedence.
  */
 
 import { ConfigSchema, MediaConfig } from "./schema";
@@ -11,7 +12,17 @@ import { getLogger } from "../core/logger";
 const logger = getLogger();
 
 /**
- * Load configuration from environment variables
+ * Load configuration from environment variables.
+ * Reads standard environment variable names and converts them to config format.
+ *
+ * @returns Partial configuration object from environment variables.
+ *
+ * @example
+ * // Environment variables:
+ * // MEDIA_DISK=local
+ * // MEDIA_LOG_LEVEL=debug
+ * // S3_KEY=xxx S3_SECRET=yyy S3_BUCKET=mybucket
+ * const envConfig = loadFromEnv();
  */
 function loadFromEnv(): Partial<MediaConfig> {
   const env = process.env;
@@ -92,7 +103,23 @@ function loadFromEnv(): Partial<MediaConfig> {
 }
 
 /**
- * Validate and merge configuration
+ * Load, validate, and merge configuration from multiple sources.
+ * Merges environment variables and user config with proper precedence (user config wins).
+ * Validates the final configuration using Zod schema.
+ *
+ * @param userConfig - User-provided partial configuration (takes precedence over env).
+ * @returns Validated and merged MediaConfig object.
+ * @throws {ConfigurationError} If configuration validation fails.
+ *
+ * @example
+ * ```typescript
+ * const config = loadConfig({
+ *   disk: "s3",
+ *   disks: {
+ *     s3: { driver: "s3", key: "...", secret: "...", bucket: "..." }
+ *   }
+ * });
+ * ```
  */
 export function loadConfig(userConfig: Partial<MediaConfig> = {}): MediaConfig {
   try {
@@ -127,7 +154,12 @@ export function loadConfig(userConfig: Partial<MediaConfig> = {}): MediaConfig {
 }
 
 /**
- * Validate a partial config without loading
+ * Validate a partial configuration without loading from environment.
+ * Useful for validating user-provided config before merging.
+ *
+ * @param config - Partial configuration to validate.
+ * @returns Validated MediaConfig object.
+ * @throws {ConfigurationError} If configuration validation fails.
  */
 export function validateConfig(config: Partial<MediaConfig>): MediaConfig {
   return ConfigSchema.parse(config);

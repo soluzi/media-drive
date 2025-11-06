@@ -2,7 +2,16 @@
  * Migration Utility for Media Drive v3.0
  *
  * Helps migrate existing media records to store paths in the database.
- * This is required when upgrading from v2.x to v3.0.
+ * This is required when upgrading from v2.x to v3.0, as v3.0 stores
+ * file paths directly in the database for better compatibility with
+ * non-deterministic path generators.
+ *
+ * The migration utility:
+ * - Finds all media records without stored paths
+ * - Generates paths using the provided path generator
+ * - Updates records in batches for efficiency
+ * - Supports dry-run mode for testing
+ * - Provides detailed migration statistics
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -11,53 +20,86 @@ import { getLogger } from "../core/logger";
 
 const logger = getLogger();
 
+/**
+ * Options for media path migration.
+ */
 export interface MigrationOptions {
   /**
-   * Batch size for processing records
+   * Number of records to process in each batch (default: 100).
+   * Larger batches are faster but use more memory.
    */
   batchSize?: number;
 
   /**
-   * Whether to continue on errors
+   * Whether to continue processing when errors occur (default: true).
+   * If false, migration stops on first error.
    */
   continueOnError?: boolean;
 
   /**
-   * Dry run mode (don't actually update records)
+   * Dry run mode - don't actually update records (default: false).
+   * Useful for testing migration before applying changes.
    */
   dryRun?: boolean;
 }
 
+/**
+ * Result of media path migration operation.
+ */
 export interface MigrationResult {
+  /** Total number of records found without paths. */
   total: number;
+  /** Number of records successfully migrated. */
   migrated: number;
+  /** Number of records that failed to migrate. */
   failed: number;
+  /** Number of records skipped (already had paths). */
   skipped: number;
+  /** Array of errors encountered during migration. */
   errors: Array<{ mediaId: string; error: string }>;
 }
 
 /**
- * Migrate existing media records to store paths
+ * Migrate existing media records to store paths in the database.
  *
- * This utility finds all media records without a stored path and generates
- * the path using the provided path generator.
+ * This utility finds all media records without a stored path (path is null or empty)
+ * and generates the path using the provided path generator. Records are processed
+ * in batches for efficiency and can be run in dry-run mode for testing.
  *
- * @param prisma - Prisma client instance
- * @param pathGenerator - Path generator to use for generating paths
- * @param options - Migration options
- * @returns Migration result statistics
+ * **Important**: Use the same path generator strategy that was used when the files
+ * were originally uploaded, otherwise paths may not match actual file locations.
+ *
+ * @param prisma - Prisma client instance for database access.
+ * @param pathGenerator - Path generator to use for generating paths.
+ *   Must match the strategy used when files were originally uploaded.
+ * @param options - Migration options (batch size, error handling, dry-run mode).
+ * @returns Promise resolving to migration result with statistics and errors.
+ * @throws {Error} If migration fails and continueOnError is false.
  *
  * @example
  * ```typescript
- * import { migrateMediaPaths, DefaultPathGenerator } from "media-drive";
+ * import { migrateMediaPaths, DefaultPathGenerator } from "@uniflapp/node-media-library";
  *
+ * // Test migration first
+ * const testResult = await migrateMediaPaths(
+ *   prisma,
+ *   new DefaultPathGenerator(),
+ *   { dryRun: true, batchSize: 50 }
+ * );
+ *
+ * console.log(`Would migrate ${testResult.migrated} of ${testResult.total} records`);
+ *
+ * // Run actual migration
  * const result = await migrateMediaPaths(
  *   prisma,
  *   new DefaultPathGenerator(),
- *   { dryRun: true } // Test first
+ *   { batchSize: 100, continueOnError: true }
  * );
  *
  * console.log(`Migrated ${result.migrated} of ${result.total} records`);
+ * if (result.failed > 0) {
+ *   console.error(`Failed: ${result.failed}`, result.errors);
+ * }
  * ```
  */
 export async function migrateMediaPaths(
@@ -183,17 +225,30 @@ export async function migrateMediaPaths(
 }
 
 /**
- * Check migration status
+ * Check migration status and statistics.
  *
- * Returns statistics about how many records need migration
+ * Returns statistics about how many media records have paths stored
+ * and how many still need migration. Useful for monitoring migration progress.
  *
- * @param prisma - Prisma client instance
- * @returns Object with counts of records with and without paths
+ * @param prisma - Prisma client instance for database access.
+ * @returns Promise resolving to migration status object with counts and percentage.
+ *
+ * @example
+ * ```typescript
+ * const status = await checkMigrationStatus(prisma);
+ * console.log(`Migration progress: ${status.percentage.toFixed(1)}%`);
+ * console.log(`${status.withPath} of ${status.total} records have paths`);
+ * console.log(`${status.withoutPath} records still need migration`);
+ * ```
  */
 export async function checkMigrationStatus(prisma: PrismaClient): Promise<{
+  /** Total number of media records in the database. */
   total: number;
+  /** Number of records that have paths stored. */
   withPath: number;
+  /** Number of records that still need migration (path is null or empty). */
   withoutPath: number;
+  /** Percentage of records that have paths (0-100). */
   percentage: number;
 }> {
   const [total, withoutPath] = await Promise.all([

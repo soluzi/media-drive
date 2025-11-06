@@ -1,7 +1,9 @@
 /**
  * BullMQ Queue Driver
  *
- * Implements async job processing with BullMQ and Redis
+ * Implements async job processing with BullMQ and Redis.
+ * Provides production-ready queue functionality with retries, backoff, and job persistence.
+ * Requires Redis server for job storage and coordination.
  */
 
 import { Queue, Worker, Job, ConnectionOptions } from "bullmq";
@@ -17,21 +19,47 @@ import { getLogger } from "../core/logger";
 
 const logger = getLogger();
 
+/**
+ * Configuration for BullMQ queue driver.
+ */
 export interface BullMQConfig {
+  /** Queue name (used as Redis key prefix). */
   name: string;
+  /** Redis connection configuration. */
   redis: {
+    /** Redis server hostname. */
     host: string;
+    /** Redis server port. */
     port: number;
+    /** Optional Redis password for authentication. */
     password?: string | undefined;
+    /** Optional Redis database number (default: 0). */
     db?: number | undefined;
   };
 }
 
+/**
+ * BullMQ queue driver implementation.
+ * Uses BullMQ library for Redis-based job queuing with advanced features:
+ * - Automatic retries with exponential backoff
+ * - Job persistence in Redis
+ * - Worker process management
+ * - Job progress tracking
+ * - Queue statistics
+ *
+ * Suitable for production multi-process deployments.
+ */
 export class BullMQDriver implements QueueDriver {
   private queue: Queue;
   private worker: Worker | null = null;
   private connectionOptions: ConnectionOptions;
 
+  /**
+   * Creates a new BullMQDriver instance.
+   * Initializes the queue but does not start a worker (call initWorker() separately).
+   *
+   * @param config - BullMQ configuration with queue name and Redis connection details.
+   */
   constructor(config: BullMQConfig) {
     // Build connection options, omitting undefined values
     this.connectionOptions = {
@@ -49,9 +77,19 @@ export class BullMQDriver implements QueueDriver {
   }
 
   /**
-   * Initialize worker to process jobs
+   * Initialize worker to process jobs.
+   * Sets up a BullMQ worker that will process jobs from the queue.
+   * Can only be called once per instance (subsequent calls are ignored).
+   *
+   * The worker automatically:
+   * - Processes jobs from the queue
+   * - Handles retries on failure
+   * - Logs job completion and failures
+   *
+   * @param processor - Function that processes conversion job data.
+   *   Should return a result or throw an error on failure.
    */
-  initWorker(processor: (data: ConversionJobData) => Promise<any>): void {
+  initWorker(processor: (data: ConversionJobData) => Promise<unknown>): void {
     if (this.worker) {
       logger.warn("Worker already initialized");
       return;
@@ -82,6 +120,17 @@ export class BullMQDriver implements QueueDriver {
     logger.info("BullMQ worker started");
   }
 
+  /**
+   * Enqueue a conversion job for background processing.
+   * Jobs are configured with:
+   * - 3 retry attempts
+   * - Exponential backoff starting at 2 seconds
+   * - Automatic cleanup (keeps last 100 completed, 50 failed)
+   *
+   * @param data - Conversion job data payload.
+   * @returns Promise resolving to job ID for tracking.
+   * @throws {QueueError} If enqueue operation fails.
+   */
   async enqueue(data: ConversionJobData): Promise<string> {
     try {
       const job = await this.queue.add("conversion", data, {
@@ -109,6 +158,14 @@ export class BullMQDriver implements QueueDriver {
     }
   }
 
+  /**
+   * Get job status and progress information.
+   * Retrieves current job state, progress percentage, result, and error information.
+   *
+   * @param jobId - Job identifier to query.
+   * @returns Promise resolving to job information (status, progress, result, error).
+   * @throws {QueueError} If job is not found or status lookup fails.
+   */
   async status(jobId: string): Promise<JobInfo> {
     try {
       const job = await this.queue.getJob(jobId);
@@ -136,6 +193,13 @@ export class BullMQDriver implements QueueDriver {
     }
   }
 
+  /**
+   * Get queue statistics (waiting, active, completed, failed counts).
+   * Fetches counts from Redis in parallel for efficiency.
+   *
+   * @returns Promise resolving to queue statistics.
+   * @throws {QueueError} If statistics retrieval fails.
+   */
   async stats(): Promise<QueueStats> {
     try {
       const [waiting, active, completed, failed] = await Promise.all([
@@ -155,6 +219,13 @@ export class BullMQDriver implements QueueDriver {
     }
   }
 
+  /**
+   * Close/cleanup the queue connection and worker.
+   * Closes both the queue and worker connections gracefully.
+   * Should be called during application shutdown.
+   *
+   * @returns Promise that resolves when cleanup is complete.
+   */
   async close(): Promise<void> {
     await Promise.all([this.queue.close(), this.worker?.close()]);
     logger.info("BullMQ driver closed");

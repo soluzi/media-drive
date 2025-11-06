@@ -1,12 +1,29 @@
 /**
  * CLI: Init Command
  *
- * Generate media.config.ts file
+ * Initializes a new Media Drive configuration file (media.config.ts).
+ * Generates a template configuration file with sensible defaults and examples
+ * for all storage drivers (local, S3, BunnyCDN) and configuration options.
+ *
+ * The generated file includes:
+ * - Disk configurations for local, S3, and BunnyCDN
+ * - File size limits and security settings
+ * - URL configuration and signing options
+ * - Image conversion settings
+ * - Queue configuration
+ * - File naming and path generation strategies
+ * - Logging configuration
+ * - Media downloader settings
  */
 
 import { writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, resolve } from "path";
 
+/**
+ * Template for media.config.ts file.
+ * Contains a complete configuration example with all available options
+ * and sensible defaults. Uses environment variables for sensitive values.
+ */
 const CONFIG_TEMPLATE = `import { defineConfig } from "media-drive";
 
 export default defineConfig({
@@ -104,6 +121,30 @@ export default defineConfig({
 });
 `;
 
+/**
+ * Initialize Media Drive configuration file.
+ * Creates a new media.config.ts file in the specified directory (or current working directory).
+ * The file contains a complete configuration template with all available options.
+ *
+ * Behavior:
+ * - Creates target directory if it doesn't exist
+ * - Checks if config file already exists (exits with error if found)
+ * - Writes configuration template to media.config.ts
+ * - Displays next steps for user
+ *
+ * @param targetDir - Optional target directory path (default: current working directory).
+ *   Can be relative or absolute path. Directory will be created if it doesn't exist.
+ * @returns Never returns (void), but may call process.exit(1) on errors.
+ *
+ * @example
+ * ```bash
+ * # Create config in current directory
+ * media-drive init
+ *
+ * # Create config in specific directory
+ * media-drive init --path ./config
+ * ```
+ */
 export function initCommand(targetDir: string | undefined = undefined): void {
   // Resolve the target directory (use cwd if not specified)
   const resolvedDir = targetDir ? resolve(targetDir) : process.cwd();

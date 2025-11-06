@@ -1,55 +1,111 @@
+/**
+ * File Validator
+ *
+ * Comprehensive file validation with MIME type detection, content validation,
+ * and image dimension checking. Uses Sharp for image analysis.
+ */
+
 import sharp from "sharp";
 
+/**
+ * Custom validation rule.
+ */
 export interface ValidationRule {
+  /** Rule name for identification. */
   name: string;
+  /** Validator function that returns true if file passes validation. */
   validator: (file: Express.Multer.File) => Promise<boolean> | boolean;
+  /** Error message to display if validation fails. */
   errorMessage: string;
 }
 
+/**
+ * File type category configuration.
+ */
 export interface FileTypeConfig {
+  /** Allowed image file extensions. */
   images: string[];
+  /** Allowed document file extensions. */
   documents: string[];
+  /** Allowed text file extensions. */
   text: string[];
+  /** Allowed audio file extensions. */
   audio: string[];
+  /** Allowed video file extensions. */
   video: string[];
+  /** Allowed archive file extensions. */
   archives: string[];
+  /** Custom file extensions. */
   custom?: string[];
 }
 
+/**
+ * File validation configuration.
+ */
 export interface ValidationConfig {
+  /** File type category configuration. */
   fileTypes: FileTypeConfig;
+  /** Whether to validate file content (magic number detection). */
   contentValidation: boolean;
+  /** Whether virus scanning is enabled (not implemented, reserved for future use). */
   virusScanning: boolean;
+  /** Maximum file size in bytes. */
   maxFileSize: number;
+  /** Custom validation rules. */
   customValidators: ValidationRule[];
+  /** Explicitly allowed MIME types (whitelist). */
   allowedMimeTypes?: string[];
+  /** Blocked MIME types (blacklist). */
   blockedMimeTypes?: string[];
+  /** Maximum image dimensions (width x height). */
   maxImageDimensions?: {
     width: number;
     height: number;
   };
+  /** Minimum image dimensions (width x height). */
   minImageDimensions?: {
     width: number;
     height: number;
   };
 }
 
+/**
+ * Result of file validation.
+ */
 export interface ValidationResult {
+  /** Whether the file passed all validation checks. */
   valid: boolean;
+  /** Array of error messages if validation failed. */
   errors: string[];
+  /** Array of warning messages (non-fatal issues). */
   warnings: string[];
+  /** Extracted file metadata. */
   metadata?: {
+    /** Declared MIME type from request. */
     mimeType: string;
+    /** Actual MIME type detected from content. */
     actualMimeType?: string;
+    /** File size in bytes. */
     fileSize: number;
+    /** Image dimensions (if image file). */
     dimensions?: { width: number; height: number };
+    /** Whether file contains metadata (EXIF, etc.). */
     hasMetadata: boolean;
   };
 }
 
+/**
+ * File validator for comprehensive file validation.
+ * Validates file types, sizes, dimensions, and content.
+ */
 export class FileValidator {
   private config: ValidationConfig;
 
+  /**
+   * Creates a new FileValidator instance.
+   *
+   * @param config - Validation configuration options.
+   */
   constructor(config: ValidationConfig) {
     this.config = {
       fileTypes: {
@@ -90,7 +146,11 @@ export class FileValidator {
   }
 
   /**
-   * Validate a file with comprehensive checks
+   * Validate a file with comprehensive checks.
+   * Performs MIME type validation, size checks, dimension checks, and content validation.
+   *
+   * @param file - Multer file object to validate.
+   * @returns Promise resolving to validation result with errors, warnings, and metadata.
    */
   async validate(file: Express.Multer.File): Promise<ValidationResult> {
     const errors: string[] = [];

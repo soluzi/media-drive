@@ -1,7 +1,8 @@
 /**
  * MediaLibrary - Main Service Orchestrator
  *
- * Thin orchestrator that coordinates file operations, conversions, and database records
+ * Thin orchestrator that coordinates file operations, conversions, and database records.
+ * Provides the main API for attaching files, managing media records, and processing conversions.
  */
 
 import { PrismaClient, Prisma } from "@prisma/client";
@@ -27,13 +28,26 @@ import { createStorageDriver } from "../storage/storage-factory";
 const logger = getLogger();
 
 /**
- * Main MediaLibrary Service
+ * Main MediaLibrary service class.
+ * Orchestrates file uploads, storage, conversions, and database operations.
+ * Implements the MediaLibraryService interface.
  */
 export class MediaLibrary {
   private fileService: FileService;
   private urlService: UrlService;
   private storageDriverCache: Map<string, StorageDriver> = new Map();
 
+  /**
+   * Creates a new MediaLibrary instance.
+   *
+   * @param config - Media library configuration.
+   * @param prisma - Prisma client instance for database operations.
+   * @param _storage - Default storage driver for file operations.
+   * @param pathGenerator - Path generator for organizing files in storage.
+   * @param _fileNamer - File namer for generating filenames.
+   * @param _conversionProcessor - Optional image conversion processor.
+   * @param queueDriver - Optional queue driver for async conversions.
+   */
   constructor(
     private config: MediaConfig,
     private prisma: PrismaClient,
@@ -57,8 +71,12 @@ export class MediaLibrary {
   }
 
   /**
-   * Get storage driver for a specific disk
-   * Caches drivers to avoid recreating them
+   * Get storage driver for a specific disk.
+   * Caches drivers to avoid recreating them on each request.
+   *
+   * @param diskName - Name of the disk configuration to use.
+   * @returns StorageDriver instance for the specified disk.
+   * @throws {ConfigurationError} If disk configuration is not found.
    */
   public getStorageDriver(diskName: string): StorageDriver {
     // Check cache first
@@ -81,7 +99,15 @@ export class MediaLibrary {
   }
 
   /**
-   * Attach a file to a model
+   * Attach a file to a model instance.
+   * Uploads the file, processes conversions if specified, and creates a database record.
+   *
+   * @param modelType - Model type (e.g., "User", "Post").
+   * @param modelId - Model instance ID.
+   * @param file - Multer file object from Express request.
+   * @param options - Optional attachment options (collection, name, disk, conversions, etc.).
+   * @returns Promise resolving to created media record.
+   * @throws {Error} If file size exceeds limits or upload fails.
    */
   async attachFile(
     modelType: string,
@@ -142,7 +168,15 @@ export class MediaLibrary {
   }
 
   /**
-   * Attach a file from URL
+   * Attach a file from a remote URL.
+   * Downloads the file, then processes it as if it were uploaded directly.
+   *
+   * @param modelType - Model type (e.g., "User", "Post").
+   * @param modelId - Model instance ID.
+   * @param url - Remote URL to download file from.
+   * @param options - Optional attachment options (collection, name, disk, conversions, headers, timeout).
+   * @returns Promise resolving to created media record.
+   * @throws {Error} If download fails or file processing fails.
    */
   async attachFromUrl(
     modelType: string,
@@ -199,7 +233,13 @@ export class MediaLibrary {
   }
 
   /**
-   * List media for a model
+   * List all media files for a model instance.
+   * Optionally filters by collection name.
+   *
+   * @param modelType - Model type (e.g., "User", "Post").
+   * @param modelId - Model instance ID.
+   * @param collection - Optional collection name to filter by.
+   * @returns Promise resolving to array of media records, ordered by order_column.
    */
   async list(
     modelType: string,
@@ -228,7 +268,12 @@ export class MediaLibrary {
   }
 
   /**
-   * Remove media
+   * Remove a media file and its database record.
+   * Deletes the original file and all conversion variants from storage.
+   *
+   * @param mediaId - Media record ID to remove.
+   * @returns Promise that resolves when removal is complete.
+   * @throws {NotFoundError} If media record is not found.
    */
   async remove(mediaId: string): Promise<void> {
     const media = await this.prisma.media.findUnique({
@@ -285,7 +330,14 @@ export class MediaLibrary {
   }
 
   /**
-   * Resolve file URL
+   * Resolve the URL for a media file or conversion.
+   * Returns a public or signed URL depending on configuration and parameters.
+   *
+   * @param mediaId - Media record ID.
+   * @param conversion - Optional conversion name (e.g., "thumb", "large").
+   * @param signed - Whether to generate a signed/temporary URL (default: false).
+   * @returns Promise resolving to file URL.
+   * @throws {NotFoundError} If media record or conversion is not found.
    */
   async resolveFileUrl(
     mediaId: string,
@@ -339,7 +391,14 @@ export class MediaLibrary {
   }
 
   /**
-   * Process conversions asynchronously
+   * Process image conversions asynchronously using the queue driver.
+   * Enqueues a conversion job for background processing.
+   *
+   * @param mediaId - Media record ID to process.
+   * @param conversions - Map of conversion names to their options.
+   * @returns Promise resolving to job ID for tracking.
+   * @throws {Error} If queue driver is not configured.
+   * @throws {NotFoundError} If media record is not found.
    */
   async processConversionsAsync(
     mediaId: string,
@@ -380,9 +439,13 @@ export class MediaLibrary {
   }
 
   /**
-   * Get conversion job status
+   * Get conversion job status and progress information.
+   *
+   * @param jobId - Job identifier to query.
+   * @returns Promise resolving to job information (status, progress, result, error).
+   * @throws {Error} If queue driver is not configured.
    */
-  async getConversionJobStatus(jobId: string): Promise<any> {
+  async getConversionJobStatus(jobId: string): Promise<unknown> {
     if (!this.queueDriver) {
       throw new Error("Queue driver not configured");
     }
@@ -391,9 +454,12 @@ export class MediaLibrary {
   }
 
   /**
-   * Get queue statistics
+   * Get queue statistics (waiting, active, completed, failed counts).
+   *
+   * @returns Promise resolving to queue statistics.
+   * @throws {Error} If queue driver is not configured.
    */
-  async getQueueStats(): Promise<any> {
+  async getQueueStats(): Promise<unknown> {
     if (!this.queueDriver) {
       throw new Error("Queue driver not configured");
     }
@@ -401,6 +467,13 @@ export class MediaLibrary {
     return await this.queueDriver.stats();
   }
 
+  /**
+   * Extract filename from a URL.
+   * Falls back to "download" if extraction fails.
+   *
+   * @param url - URL to extract filename from.
+   * @returns Extracted filename or "download" as fallback.
+   */
   private extractFileNameFromUrl(url: string): string {
     try {
       const urlObj = new URL(url);

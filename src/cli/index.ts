@@ -2,6 +2,29 @@
 
 /**
  * Media Drive CLI
+ *
+ * Command-line interface for Media Drive v2.
+ * Provides utilities for initializing configuration, checking environment,
+ * and managing database migrations.
+ *
+ * Available commands:
+ * - `init`: Generate configuration file template
+ * - `doctor`: Check environment and dependencies
+ * - `migrate`: Display Prisma schema and migration instructions
+ * - `help`: Show help message
+ *
+ * @example
+ * ```bash
+ * # Initialize configuration
+ * media-drive init
+ * media-drive init --path ./config
+ *
+ * # Check environment
+ * media-drive doctor
+ *
+ * # Show migration instructions
+ * media-drive migrate
+ * ```
  */
 
 import { initCommand } from "./commands/init";
@@ -12,7 +35,17 @@ const args = process.argv.slice(2);
 const command = args[0];
 
 /**
- * Parse command line options
+ * Parse command line options from arguments array.
+ * Extracts `--key value` pairs into an options object.
+ *
+ * @param args - Array of command line arguments (excluding command name).
+ * @returns Object mapping option keys to their values (or undefined if no value provided).
+ *
+ * @example
+ * ```typescript
+ * parseOptions(["--path", "./config", "--force"]);
+ * // Returns: { path: "./config", force: undefined }
+ * ```
  */
 function parseOptions(args: string[]): Record<string, string | undefined> {
   const options: Record<string, string | undefined> = {};
@@ -30,6 +63,21 @@ function parseOptions(args: string[]): Record<string, string | undefined> {
   return options;
 }
 
+/**
+ * Main CLI entry point.
+ * Parses command line arguments and routes to appropriate command handler.
+ * Displays help message for unknown commands or when help is requested.
+ *
+ * Supported commands:
+ * - `init`: Initialize configuration file (optionally with --path)
+ * - `doctor`: Run environment diagnostics
+ * - `migrate`: Display database migration instructions
+ * - `help`, `--help`, `-h`: Display help message
+ * - Default: Display help message for unknown commands
+ *
+ * @returns Promise that resolves when command execution completes.
+ * @throws Never throws, but command handlers may call process.exit().
+ */
 async function main(): Promise<void> {
   const options = parseOptions(args);
 
@@ -75,6 +123,7 @@ Examples:
   }
 }
 
+// Execute main function and handle errors
 main().catch((error) => {
   console.error("Error:", error);
   process.exit(1);

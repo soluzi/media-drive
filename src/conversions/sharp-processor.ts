@@ -1,7 +1,8 @@
 /**
  * Sharp Conversion Processor
  *
- * Implements image processing using the Sharp library
+ * Implements image processing using the Sharp library.
+ * Provides high-performance image resizing, format conversion, and optimization.
  */
 
 import sharp, { FitEnum } from "sharp";
@@ -15,12 +16,21 @@ import { getLogger } from "../core/logger";
 
 const logger = getLogger();
 
+/**
+ * Configuration options for SharpProcessor.
+ */
 export interface SharpProcessorConfig {
+  /** Enable progressive JPEG encoding (default: true). */
   progressive?: boolean | undefined;
+  /** Strip EXIF and other metadata from images (default: true). */
   stripMetadata?: boolean | undefined;
+  /** Default quality for lossy formats (1-100, default: 85). */
   defaultQuality?: number | undefined;
 }
 
+/**
+ * Map conversion fit options to Sharp's FitEnum values.
+ */
 const fitMap: Record<ConversionOptions["fit"] & string, keyof FitEnum> = {
   cover: "cover",
   contain: "contain",
@@ -29,6 +39,10 @@ const fitMap: Record<ConversionOptions["fit"] & string, keyof FitEnum> = {
   outside: "outside",
 };
 
+/**
+ * Sharp-based image conversion processor.
+ * Uses the Sharp library for high-performance image processing.
+ */
 export class SharpProcessor implements ConversionProcessor {
   private defaults: {
     quality: number;
@@ -36,6 +50,11 @@ export class SharpProcessor implements ConversionProcessor {
     stripMetadata: boolean;
   };
 
+  /**
+   * Creates a new SharpProcessor instance.
+   *
+   * @param config - Processor configuration options.
+   */
   constructor(config: SharpProcessorConfig = {}) {
     this.defaults = {
       quality: config.defaultQuality ?? 85,
@@ -44,6 +63,15 @@ export class SharpProcessor implements ConversionProcessor {
     };
   }
 
+  /**
+   * Process an image buffer with multiple conversion configurations.
+   * Processes conversions sequentially and continues even if one fails.
+   *
+   * @param input - Source image buffer to process.
+   * @param conversions - Map of conversion names to their options.
+   * @returns Promise resolving to map of conversion names to processed results.
+   * @throws {ConversionError} If all conversions fail.
+   */
   async process(
     input: Buffer,
     conversions: Record<string, ConversionOptions>
@@ -65,6 +93,14 @@ export class SharpProcessor implements ConversionProcessor {
     return results;
   }
 
+  /**
+   * Process a single conversion operation.
+   *
+   * @param input - Source image buffer to process.
+   * @param options - Conversion options to apply.
+   * @returns Promise resolving to conversion result.
+   * @throws {ConversionError} If processing fails.
+   */
   async processOne(
     input: Buffer,
     options: ConversionOptions
@@ -77,6 +113,15 @@ export class SharpProcessor implements ConversionProcessor {
     };
   }
 
+  /**
+   * Internal method to process a single conversion and return the buffer.
+   * Applies resizing, format conversion, quality settings, and metadata handling.
+   *
+   * @param input - Source image buffer.
+   * @param options - Conversion options.
+   * @returns Promise resolving to processed image buffer.
+   * @throws {ConversionError} If Sharp processing fails.
+   */
   private async processOneBuffer(
     input: Buffer,
     options: ConversionOptions

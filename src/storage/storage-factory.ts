@@ -4,6 +4,11 @@
  * Creates new storage driver instances based on disk configuration.
  * Each call creates a fresh instance - drivers are not cached here.
  * Caching is handled by MediaLibrary.getStorageDriver() if needed.
+ *
+ * Supported driver types:
+ * - "local": Local filesystem storage
+ * - "s3": Amazon S3 storage
+ * - "bunnycdn": BunnyCDN storage
  */
 
 import { StorageDriver } from "../core/contracts";
@@ -17,16 +22,23 @@ import { ConfigurationError } from "../core/errors";
  * Create a new storage driver instance based on disk configuration.
  *
  * This function always creates a NEW instance - it does not reuse or cache drivers.
- * The configuration object is passed directly to the driver constructor.
+ * The configuration object is validated and passed directly to the driver constructor.
+ * Driver instances are created based on the `driver` field in the configuration.
  *
- * @param config - The disk configuration object from config.disks[diskName]
- * @returns A new StorageDriver instance configured for the specified disk
- * @throws ConfigurationError if the driver type is not supported or config is invalid
+ * @param config - Disk configuration object from `config.disks[diskName]`.
+ *   Must contain a `driver` field specifying the driver type ("local", "s3", or "bunnycdn").
+ * @returns New StorageDriver instance configured for the specified disk type.
+ * @throws {ConfigurationError} If configuration is missing, invalid, or driver type is unsupported.
  *
  * @example
  * ```typescript
- * const diskConfig = config.disks["local"];
- * const driver = createStorageDriver(diskConfig); // New LocalStorageDriver instance
+ * // Create a local storage driver
+ * const localConfig = config.disks["local"];
+ * const localDriver = createStorageDriver(localConfig);
+ *
+ * // Create an S3 storage driver
+ * const s3Config = config.disks["s3"];
+ * const s3Driver = createStorageDriver(s3Config);
  * ```
  */
 export function createStorageDriver(config: DiskConfig): StorageDriver {

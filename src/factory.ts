@@ -1,7 +1,9 @@
 /**
  * Media Drive Factory
  *
- * Creates and configures the MediaLibrary with all dependencies
+ * Creates and configures MediaLibrary instances with full dependency injection setup.
+ * Handles provider resolution, configuration loading, and dependency registration.
+ * Provides factory functions for both standard and enhanced media library instances.
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -26,33 +28,87 @@ import {
   FileNamer,
 } from "./core/contracts";
 
+/**
+ * Options for creating a MediaLibrary instance.
+ * Allows customization of configuration, Prisma client, and provider implementations.
+ */
 export interface CreateMediaLibraryOptions {
   /**
-   * Partial configuration (will be merged with defaults and env)
+   * Partial configuration that will be merged with defaults and environment variables.
+   * User config takes precedence over environment variables.
    */
   config?: Partial<MediaConfig> | undefined;
 
   /**
-   * Prisma client instance (if not provided, creates new instance)
+   * Prisma client instance for database operations.
+   * If not provided, a new PrismaClient instance will be created.
    */
   prisma?: PrismaClient | undefined;
 
   /**
-   * Override default providers
+   * Override default provider implementations.
+   * Allows injecting custom storage drivers, conversion processors, queue drivers, etc.
+   * Provider resolution order: options.providers > config.providers > defaults.
    */
   providers?:
     | {
+        /** Custom storage driver (overrides config-based driver creation). */
         storageDriver?: StorageDriver | undefined;
+        /** Custom conversion processor (overrides SharpProcessor default). */
         conversionProcessor?: ConversionProcessor | undefined;
+        /** Custom queue driver (overrides config-based queue driver creation). */
         queueDriver?: QueueDriver | undefined;
+        /** Custom path generator (overrides config-based path generator creation). */
         pathGenerator?: PathGenerator | undefined;
+        /** Custom file namer (overrides config-based file namer creation). */
         fileNamer?: FileNamer | undefined;
       }
     | undefined;
 }
 
 /**
- * Create a MediaLibrary instance with full DI setup
+ * Create a MediaLibrary instance with full dependency injection setup.
+ *
+ * This factory function:
+ * 1. Loads and validates configuration (merges user config with env vars)
+ * 2. Sets up logging based on configuration
+ * 3. Resolves or creates Prisma client
+ * 4. Registers all dependencies in the DI registry
+ * 5. Resolves providers (options > config > defaults)
+ * 6. Creates and returns configured MediaLibrary instance
+ *
+ * Provider resolution follows this priority:
+ * - `options.providers.*` (highest priority)
+ * - `config.providers.*`
+ * - Default implementations based on config (lowest priority)
+ *
+ * @param options - Creation options with optional config, Prisma client, and providers.
+ * @returns Configured MediaLibrary instance ready to use.
+ * @throws {Error} If disk configuration is not found or Redis is required but not configured for BullMQ.
+ *
+ * @example
+ * ```typescript
+ * // Basic usage with defaults
+ * const mediaLibrary = createMediaLibrary();
+ *
+ * // With custom configuration
+ * const mediaLibrary = createMediaLibrary({
+ *   config: {
+ *     disk: "s3",
+ *     disks: {
+ *       s3: { driver: "s3", key: "...", secret: "...", bucket: "..." }
+ *     }
+ *   }
+ * });
+ *
+ * // With custom providers
+ * const mediaLibrary = createMediaLibrary({
+ *   providers: {
+ *     storageDriver: myCustomStorageDriver,
+ *     conversionProcessor: myCustomProcessor
+ *   }
+ * });
+ * ```
  */
 export function createMediaLibrary(
   options: CreateMediaLibraryOptions = {}
@@ -171,33 +227,83 @@ export function createMediaLibrary(
   );
 }
 
+/**
+ * Options for creating an EnhancedMediaLibrary instance.
+ * EnhancedMediaLibrary includes built-in HTTP middleware and Express integration.
+ * Extends CreateMediaLibraryOptions with enhanced-specific configuration.
+ */
 export interface CreateEnhancedMediaLibraryOptions {
   /**
-   * Partial configuration (will be merged with defaults and env)
+   * Partial configuration that will be merged with defaults and environment variables.
+   * Must include EnhancedMediaLibraryConfig properties for HTTP features.
+   * User config takes precedence over environment variables.
    */
   config?: Partial<EnhancedMediaLibraryConfig> | undefined;
 
   /**
-   * Prisma client instance (if not provided, creates new instance)
+   * Prisma client instance for database operations.
+   * If not provided, a new PrismaClient instance will be created.
    */
   prisma?: PrismaClient | undefined;
 
   /**
-   * Override default providers
+   * Override default provider implementations.
+   * Allows injecting custom storage drivers, conversion processors, queue drivers, etc.
+   * Provider resolution order: options.providers > config.providers > defaults.
    */
   providers?:
     | {
+        /** Custom storage driver (overrides config-based driver creation). */
         storageDriver?: StorageDriver | undefined;
+        /** Custom conversion processor (overrides SharpProcessor default). */
         conversionProcessor?: ConversionProcessor | undefined;
+        /** Custom queue driver (overrides config-based queue driver creation). */
         queueDriver?: QueueDriver | undefined;
+        /** Custom path generator (overrides config-based path generator creation). */
         pathGenerator?: PathGenerator | undefined;
+        /** Custom file namer (overrides config-based file namer creation). */
         fileNamer?: FileNamer | undefined;
       }
     | undefined;
 }
 
 /**
- * Create an Enhanced MediaLibrary with built-in HTTP support
+ * Create an EnhancedMediaLibrary instance with built-in HTTP support.
+ *
+ * EnhancedMediaLibrary extends MediaLibrary with:
+ * - Express middleware for file uploads
+ * - Built-in validation
+ * - HTTP error handling
+ * - Progress tracking
+ * - Streaming upload support
+ *
+ * This factory function follows the same provider resolution logic as `createMediaLibrary()`.
+ * All dependencies are registered in the DI registry and the instance is ready for Express integration.
+ *
+ * @param options - Creation options with optional config, Prisma client, and providers.
+ * @returns Configured EnhancedMediaLibrary instance with HTTP support ready to use.
+ * @throws {Error} If disk configuration is not found or Redis is required but not configured for BullMQ.
+ *
+ * @example
+ * ```typescript
+ * // Basic usage
+ * const mediaLibrary = createEnhancedMediaLibrary();
+ *
+ * // Use with Express
+ * const app = express();
+ * app.use("/api/media", mediaLibrary.getRouter());
+ *
+ * // With custom configuration
+ * const mediaLibrary = createEnhancedMediaLibrary({
+ *   config: {
+ *     disk: "s3",
+ *     validation: {
+ *       maxFileSize: 50 * 1024 * 1024, // 50MB
+ *       allowedMimeTypes: ["image/jpeg", "image/png"]
+ *     }
+ *   }
+ * });
+ * ```
  */
 export function createEnhancedMediaLibrary(
   options: CreateEnhancedMediaLibraryOptions = {}
